@@ -9,6 +9,14 @@ import type {
 } from './worker'
 
 //
+export abstract class HCMAttendanceService {
+
+}
+
+//
+export abstract class HCMWorkerShiftService {
+  
+}
 
 // 
 export type Attendance = {
@@ -48,19 +56,19 @@ export type Attendance = {
 
 // 
 export enum AttendanceType {
-  AT_ONCALL,
-  AT_DAYOFF,
-  AT_HALFDAY,
-  AT_NIGHT,
+  ONCALL,
+  DAYOFF,
+  HALFDAY,
+  NIGHT,
 }
 
 // 
 export enum AttendanceStatus {
-  AS_PRESENT,
-  AS_LATE,
-  AS_OVERRIDE,
-  AS_HOLIDAY,
-  AS_OVERTIME,
+  PRESENT,
+  LATE,
+  OVERRIDE,
+  HOLIDAY,
+  OVERTIME,
 }
 
 // Every role should be assigned with a standard 7-day shift. Optionall
@@ -112,10 +120,10 @@ export type OverrideShift = {
 
 // 
 enum StandardShiftDay {
-  SD_MONDAY,
-  SD_TUESDAY,
-  SD_WEDNESDAY,
-  SD_THURSDAY,
-  SD_FRIDAY,
-  SD_SATURDAY,
+  MONDAY,
+  TUESDAY,
+  WEDNESDAY,
+  THURSDAY,
+  FRIDAY,
+  SATURDAY,
 }

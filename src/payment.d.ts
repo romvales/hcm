@@ -5,6 +5,26 @@ import type {
   Worker
 } from './worker'
 
+//
+export abstract class HCMWorkerPayInfoService {
+
+}
+
+//
+export abstract class HCMCompensationService {
+
+}
+
+//
+export abstract class HCMAdditionService {
+
+}
+
+//
+export abstract class HCMDeductionService {
+
+}
+
 // Represents the default worker payment info that will be used in the computation
 // it can be overriden by anyone by specifying a WorkerPayInfoOverride.
 export type WorkerPayInfo = {
@@ -30,7 +50,7 @@ export type WorkerPayInfo = {
   deductions?: Deduction[]
 }
 
-// 
+//
 export type WorkerPayInfoOverride = {
   id: number
   payId: number
@@ -70,6 +90,7 @@ export type Compensation = {
 
   //
   value: number
+  
 }
 
 // Additions is a value added to the final pay for a worker on any specific pay period.
@@ -101,35 +122,35 @@ export type Addition = {
 
 //
 export enum CompensationStatus {
-  CS_PENDING,
-  CS_APPROVED,
-  CS_REJECTED,
-  CS_PAID,
+  PENDING,
+  APPROVED,
+  REJECTED,
+  PAID,
 }
 
 //
 export enum AdditionScope {
-  AS_GLOBAL,
-  AS_ROLE,
-  AS_TEAM,
-  AS_WORKER,
+  GLOBAL,
+  ROLE,
+  TEAM,
+  WORKER,
 }
 
 //
 export enum AdditionType {
-  AS_REIMBURSEMENT,
-  AS_BONUS,
-  AS_COMMISSION,
-  AS_OTHER,
+  REIMBURSEMENT,
+  BONUS,
+  COMMISSION,
+  OTHER,
 }
 
 //
 export enum AdditionStatus {
-  AS_PENDING,
-  AS_VERIFIED,
-  AS_REJECT,
-  AS_WAITING,
-  AS_DISABLED,
+  PENDING,
+  VERIFIED,
+  REJECT,
+  WAITING,
+  DISABLED,
 }
 
 // A type that represents a value that will either be deducted to the total pay
@@ -168,33 +189,33 @@ export type Deduction = {
 
 //
 export enum DeductionScope {
-  DS_GLOBAL,
-  DS_ROLE,
-  DS_TEAM,
-  DS_WORKER,
+  GLOBAL,
+  ROLE,
+  TEAM,
+  WORKER,
 }
 
 //
 export enum DeductionType {
-  DT_TAX,
-  DT_BENEFIT,
-  DT_REIMBURSEMENT,
-  DT_GARNISHMENT,
-  DT_OTHER,
+  TAX,
+  BENEFIT,
+  REIMBURSEMENT,
+  GARNISHMENT,
+  OTHER,
 }
 
 //
 export enum DeductionStatus {
-  DS_PENDING,
-  DS_VERIFIED,
-  DS_REJECT,
-  DS_WAITING,
-  DS_DISABLED,
+  PENDING,
+  VERIFIED,
+  REJECT,
+  WAITING,
+  DISABLED,
 }
 
 //
 export enum WorkerPayInfoType {
-  WPI_HOURLY,
-  WPI_SALARY,
-  WPI_NONEXEMPT,
+  HOURLY,
+  SALARY,
+  NONEXEMPT,
 }

@@ -1,12 +1,80 @@
 // @tags-mvp
 
 import type {
-  Organization
+  Organization, PendingJoinRequest
 } from './index.d'
 
 import type { 
   StandardShift,
 } from './time'
+
+export abstract class HCMRoleService {
+  static createRole(name: string): Role
+
+  static async getRoleById(id: number): Promise<Role>
+  static async deleteRoleById<T>(id: number): Promise<T>
+  static async saveRole<T>(role: Role): Promise<T>
+
+  static changeRoleName<T>(team: Team): T
+  static changeRoleStatus<T>(role: Role, status: RoleStatus): T
+}
+
+export abstract class HCMTeamService {
+  static createTeam(name: string): Team
+
+  static async getTeamById(id: number): Promise<Team>
+  static async deleteTeamById<T>(id: number): Promise<T>
+  static async saveTeam<T>(team: Team): Promise<T>
+
+  static changeTeamName<T>(team: Team): T
+  static changeTeamStatus<T>(team: Team, status: TeamStatus): T
+
+  static async getWorkerMembers(team: Team): Promise<Worker[]>
+
+  static async addWorkerToTeam<T>(team: Team, worker: Worker): Promise<T>
+  static async removeWorkerFromTeam<T>(team: Team, worker: Worker): Promise<T>
+}
+
+export abstract class HCMWorkerService {
+  static createWorker(): Worker
+
+  static async getWorkerById(id: number): Promise<Worker>
+  static async deleteWorkerById<T>(id: number): Promise<T>
+  static async saveWorker<T>(worker: Worker): Promise<T>
+
+  static changeWorkerStatus<T>(worker: Worker, status: WorkerStatus): T
+  static changeWorkerType<T>(worker: Worker, type: WorkerType): T
+  static changeWorkerRole<T>(worker: Worker, newRole: Role): T
+  static changeWorkerTeam<T>(worker: Worker, newTeam: Team): T
+  static changeWorkerPayCycle<T>(worker: Worker, newPayCycle: WorkerPayCycle): T
+
+  static suspend<T>(worker: Worker): T
+  static terminate<T>(worker: Worker): T
+  static resign<T>(worker: Worker): T
+
+  static addWorkerAddress<T>(worker: Worker, address: WorkerAddress): T
+  static addIdentityCards<T>(worker: Worker, identityCards: WorkerIdentityCard[]): T
+
+  static getWorkerType(worker: Worker): WorkerType
+  static getWorkerStatus(worker: Worker): WorkerStatus
+  static getAddresses(worker: Worker): WorkerAddress[]
+  static getIdentityCards(worker: Worker): WorkerIdentityCard[]
+
+  static async getOrganization(worker: Worker): Promise<Organization | undefined>
+  static async getRole(worker: Worker): Promise<Role | undefined>
+  static async getTeam(worker: Worker): Promise<Team | undefined>
+
+  static hasOverridenStandardShifts(worker: Worker): boolean
+  static isWorkerHired(worker: Worker): boolean
+  static isWorkerOnLeave(worker: Worker): boolean
+  static isWorkerRemote(worker: Worker): boolean
+  static isWorkerOnline(worker: Worker): boolean
+  static isWorkerRemotelyOnline(worker: Worker): boolean
+  static isWorkerOffline(worker: Worker): boolean
+  static isWorkerAway(worker: Worker): boolean
+  static isWorkerSuspended(worker: Worker): boolean
+  static isWorkerOnCall(worker: Worker): boolean
+} 
 
 // 
 export type Role = {
@@ -55,6 +123,7 @@ export type Worker = {
   id: number
   createdById: number
   updatedById?: number
+  hiredBy?: number
   organizationId?: number
   roleId?: number
   teamId?: number
@@ -64,9 +133,12 @@ export type Worker = {
 
   createdBy: Worker
   updatedBy?: Worker
+  hiredBy?: Worker
 
   createdAt: number
   lastUpdatedAt?: number
+
+  scheduledSuspensionAt?: number
 
   // When was the employee hired in the organization?
   hiredAt: number
@@ -98,8 +170,28 @@ export type Worker = {
   status?: WorkerStatus
   type?: WorkerType
 
-  // 
+  // When an worker is onboarded to the team as remote, make sure that
+  // isRemote is toggled to true
   isRemote?: boolean
+
+  // When a worker is now hired by an organization, make sure that you toggle
+  // this state to true
+  isHired?: boolean
+
+  //
+  isDayOff?: boolean
+
+  //
+  isOnCall?: boolean
+
+  //
+  isOnLeave?: boolean
+
+  //
+  isTerminated?: boolean
+
+  //
+  isSuspended?: boolean
 
   // Overrides the standard shift assigned to the role for a specific worker.
   overridesShift?: StandardShift[]
@@ -116,6 +208,7 @@ export type Worker = {
 
   birthdate?: number
 
+  username?: string
   email: string
   mobile? : string
 
@@ -135,7 +228,7 @@ export type WorkerIdentityCard = {
   frontImageUrl: string
   backImageUrl: string
 
-  extractedInfo?: any
+  extractedInfo?: unknown
 }
 
 //
@@ -150,59 +243,61 @@ export type WorkerAddress = {
 
 //
 export enum WorkerAddressType {
-  WAT_HOME,
-  WAT_BUSINESS,
-  WAT_BILLING,
-  WAT_SHIPPING
+  HOME,
+  BUSINESS,
+  BILLING,
+  SHIPPING
 }
 
 //
 export enum WorkerGender {
-  WG_MALE,
-  WG_FEMALE,
-  WG_OTHER
+  MALE,
+  FEMALE,
+  OTHER
 }
 
 //
 export enum WorkerStatus {
-  WS_ONLINE,
-  WS_OFFLINE,
-  WS_AWAY,
+  OFFLINE,
+  ONLINE,
+  RONLINE,
+  AWAY,
 
-  WS_SUSPENDED,
-  WS_TERMINATED,
-  WS_LEAVE,
+  SUSPENDED,
+  RESIGNED,
+  TERMINATED,
+  LEAVE,
 
-  WT_ONCALL,
+  ONCALL,
 }
 
 //
 export enum WorkerType {
-  WT_PART,
-  WT_FULL,
-  WT_SEASONAL,
-  WT_TEMPORARY,
-  WT_LEASED,
+  PART,
+  FULL,
+  SEASONAL,
+  TEMPORARY,
+  LEASED,
 }
 
 //
 export enum WorkerPayCycle {
-  WPC_WEEKLY,
-  WPC_BIWEEKLY,
-  WPC_SEMIMONTHLY,
-  WPC_MONTHLY,
+  WEEKLY,
+  BIWEEKLY,
+  SEMIMONTHLY,
+  MONTHLY,
 }
 
 export enum TeamStatus {
-  TS_ACTIVE,
-  TS_INACTIVE,
-  TS_REVIEW,
-  TS_TERMINATED,
+  ACTIVE,
+  INACTIVE,
+  REVIEW,
+  TERMINATED,
 }
 
 export enum RoleStatus {
-  TS_ACTIVE,
-  TS_INACTIVE,
-  TS_REVIEW,
-  TS_TERMINATED,
+  ACTIVE,
+  INACTIVE,
+  REVIEW,
+  TERMINATED,
 }

@@ -5,6 +5,39 @@ import type {
 } from './worker'
 
 //
+export abstract class HCMOrganizationService {
+  
+  static createOrg(
+    name: string,
+    industry: OrganizationIndustry,
+    overrideIndustry?: string
+  ): Organization
+
+  static async getOrgById(organizationId: number): Promise<Organization>
+  static async removeOrgById<T>(organizationId: number): Promise<T>
+  static async saveOrg<T>(org: Organization): Promise<T>
+
+  static changeOrgName<T>(org: Organization, name: string): T
+  static changeOrgIndustry<T>(org: Organization, industry: OrganizationIndustry, overrideIndustry?: string): T
+  static changeOrgStatus<T>(org: Organization, status: OrganizationStatus): T
+
+  static async removeWorkerById<T>(workerId: number): Promise<T>
+  static async addToOrgById<T>(org: Organization, workerId: number): Promise<T>
+
+  static async getOrgCreator(org: Organization): Promise<Worker>
+}
+
+//
+export interface HCMPendingJoinRequestService<Entity = unknown> {
+  static async sendRequest<T>(entity: Entity, recepientId: number): Promise<T>
+  static async cancelRequest<T>(entity: Entity, recepientId: number): Promise<T>
+
+  static async getPendingRequests(entity: Entity): Promise<PendingJoinRequest[]>
+  static async acceptPendingRequest<T>(entity: Entity, requestId: number): Promise<T>
+  static async declinePendingRequest<T>(entity: Entity, requestId: number): Promise<T>
+}
+
+//
 export type Organization = {
   id: number
 
@@ -21,35 +54,63 @@ export type Organization = {
   overrideIndustry?: string
 
   members?: Worker[]
+  requests?: PendingOrganizationRequest[]
+}
+
+//
+export type PendingJoinRequest = {
+  id: number
+  workerId: number
+  organizationId: number
+
+  createdAt: number
+  expiredAt: number
+
+  status?: PendingJoinRequestStatus
+  type?: PendingJoinRequestInvitationType
+
+  organization: Organization
+  worker: Worker
 }
 
 export enum OrganizationStatus {
-  OS_ACTIVE,
-  OS_INACTIVE,
-  OS_SUSPENDED,
-  OS_DISSOLVED,
+  ACTIVE,
+  INACTIVE,
+  SUSPENDED,
+  DISSOLVED,
 }
 
 export enum OrganizationIndustry {
-  OI_AGRICULTURE,
-  OI_PRODUCTION,
-  OI_CHEMICAL,
-  OI_COMMERCE,
-  OI_CONSTRUCTION,
-  OI_EDUCATION,
-  OI_FINANCIAL,
-  OI_RETAIL,
-  OI_FORESTRY,
-  OI_HEALTH,
-  OI_HOSPITALITY,
-  OI_MINING,
-  OI_MECHANICAL,
-  OI_PUBLIC_SERVICE,
-  OI_TELECOM,
-  OI_SHIPPING,
-  OI_TEXTILE,
-  OI_TRANSPORT,
-  OI_EQUIPMENT,
-  OI_UTILITIES,
-  OI_OTHER
+  AGRICULTURE,
+  PRODUCTION,
+  CHEMICAL,
+  COMMERCE,
+  CONSTRUCTION,
+  EDUCATION,
+  FINANCIAL,
+  RETAIL,
+  FORESTRY,
+  HEALTH,
+  HOSPITALITY,
+  MINING,
+  MECHANICAL,
+  PUBLIC_SERVICE,
+  TELECOM,
+  SHIPPING,
+  TEXTILE,
+  TRANSPORT,
+  EQUIPMENT,
+  UTILITIES,
+  OTHER
+}
+
+export enum PendingJoinRequestInvitationType {
+  
+}
+
+export enum PendingJoinRequestStatus {
+  PENDING,
+  ACCEPTED,
+  REJECTED,
+  EXPIRED,
 }
