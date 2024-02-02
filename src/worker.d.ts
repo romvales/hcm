@@ -1,6 +1,7 @@
 // @tags-mvp
 
 import type {
+  HCMPendingJoinRequestService,
   Organization, PendingJoinRequest
 } from './index.d'
 
@@ -8,73 +9,86 @@ import type {
   StandardShift,
 } from './time'
 
-export abstract class HCMRoleService {
-  static createRole(name: string): Role
+export abstract class HCMRoleService implements BaseOrganizationEntityStatusChecker<Role> {
+  createRole(name: string): Role
 
-  static async getRoleById(id: number): Promise<Role>
-  static async deleteRoleById<T>(id: number): Promise<T>
-  static async saveRole<T>(role: Role): Promise<T>
+  async getRoleById(id: number): Promise<Role>
+  async deleteRoleById<T>(id: number): Promise<T>
+  async saveRole<T>(role: Role): Promise<T>
 
-  static changeRoleName<T>(team: Team): T
-  static changeRoleStatus<T>(role: Role, status: RoleStatus): T
+  changeRoleName<T>(team: Team): T
+  changeRoleStatus<T>(role: Role, status: RoleStatus): T
 }
 
-export abstract class HCMTeamService {
-  static createTeam(name: string): Team
+export abstract class HCMTeamService implements BaseOrganizationEntityStatusChecker<role> {
+  createTeam(name: string): Team
 
-  static async getTeamById(id: number): Promise<Team>
-  static async deleteTeamById<T>(id: number): Promise<T>
-  static async saveTeam<T>(team: Team): Promise<T>
+  async getTeamById(id: number): Promise<Team>
+  async deleteTeamById<T>(id: number): Promise<T>
+  async saveTeam<T>(team: Team): Promise<T>
 
-  static changeTeamName<T>(team: Team): T
-  static changeTeamStatus<T>(team: Team, status: TeamStatus): T
+  changeTeamName<T>(team: Team): T
+  changeTeamStatus<T>(team: Team, status: TeamStatus): T
 
-  static async getWorkerMembers(team: Team): Promise<Worker[]>
+  async getWorkerMembers(team: Team): Promise<Worker[]>
 
-  static async addWorkerToTeam<T>(team: Team, worker: Worker): Promise<T>
-  static async removeWorkerFromTeam<T>(team: Team, worker: Worker): Promise<T>
+  async addWorkerToTeam<T>(team: Team, worker: Worker): Promise<T>
+  async removeWorkerFromTeam<T>(team: Team, worker: Worker): Promise<T>
 }
 
-export abstract class HCMWorkerService {
-  static createWorker(): Worker
+export abstract class HCMWorkerService implements HCMPendingJoinRequestService<Worker> {
+  createWorker(
+    name: { firstName: string, middleName: string, lastName: string },
+    email: string,
+    username: string,
+    mobileNumber?: string,
+    birthdate?: number
+  ): Worker
 
-  static async getWorkerById(id: number): Promise<Worker>
-  static async deleteWorkerById<T>(id: number): Promise<T>
-  static async saveWorker<T>(worker: Worker): Promise<T>
+  async getWorkerById(id: number): Promise<Worker>
+  async deleteWorkerById<T>(id: number): Promise<T>
+  async saveWorker<T>(worker: Worker): Promise<T>
 
-  static changeWorkerStatus<T>(worker: Worker, status: WorkerStatus): T
-  static changeWorkerType<T>(worker: Worker, type: WorkerType): T
-  static changeWorkerRole<T>(worker: Worker, newRole: Role): T
-  static changeWorkerTeam<T>(worker: Worker, newTeam: Team): T
-  static changeWorkerPayCycle<T>(worker: Worker, newPayCycle: WorkerPayCycle): T
+  changeWorkerStatus<T>(worker: Worker, status: WorkerStatus): T
+  changeWorkerType<T>(worker: Worker, type: WorkerType): T
+  changeWorkerRole<T>(worker: Worker, newRole: Role): T
+  changeWorkerTeam<T>(worker: Worker, newTeam: Team): T
+  changeWorkerPayCycle<T>(worker: Worker, newPayCycle: WorkerPayCycle): T
 
-  static suspend<T>(worker: Worker): T
-  static terminate<T>(worker: Worker): T
-  static resign<T>(worker: Worker): T
+  suspend<T>(worker: Worker): T
+  terminate<T>(worker: Worker): T
+  resign<T>(worker: Worker): T
 
-  static addWorkerAddress<T>(worker: Worker, address: WorkerAddress): T
-  static addIdentityCards<T>(worker: Worker, identityCards: WorkerIdentityCard[]): T
+  addWorkerAddress<T>(worker: Worker, address: WorkerAddress): T
+  addIdentityCards<T>(worker: Worker, identityCards: WorkerIdentityCard[]): T
 
-  static getWorkerType(worker: Worker): WorkerType
-  static getWorkerStatus(worker: Worker): WorkerStatus
-  static getAddresses(worker: Worker): WorkerAddress[]
-  static getIdentityCards(worker: Worker): WorkerIdentityCard[]
+  getWorkerType(worker: Worker): WorkerType
+  getWorkerStatus(worker: Worker): WorkerStatus
+  getAddresses(worker: Worker): WorkerAddress[]
+  getIdentityCards(worker: Worker): WorkerIdentityCard[]
 
-  static async getOrganization(worker: Worker): Promise<Organization | undefined>
-  static async getRole(worker: Worker): Promise<Role | undefined>
-  static async getTeam(worker: Worker): Promise<Team | undefined>
+  async getOrganization(worker: Worker): Promise<Organization | undefined>
+  async getRole(worker: Worker): Promise<Role | undefined>
+  async getTeam(worker: Worker): Promise<Team | undefined>
 
-  static hasOverridenStandardShifts(worker: Worker): boolean
-  static isWorkerHired(worker: Worker): boolean
-  static isWorkerOnLeave(worker: Worker): boolean
-  static isWorkerRemote(worker: Worker): boolean
-  static isWorkerOnline(worker: Worker): boolean
-  static isWorkerRemotelyOnline(worker: Worker): boolean
-  static isWorkerOffline(worker: Worker): boolean
-  static isWorkerAway(worker: Worker): boolean
-  static isWorkerSuspended(worker: Worker): boolean
-  static isWorkerOnCall(worker: Worker): boolean
-} 
+  hasOverridenStandardRoleShift(worker: Worker): boolean
+  isWorkerHired(worker: Worker): boolean
+  isWorkerOnLeave(worker: Worker): boolean
+  isWorkerRemote(worker: Worker): boolean
+  isWorkerOnline(worker: Worker): boolean
+  isWorkerRemotelyOnline(worker: Worker): boolean
+  isWorkerOffline(worker: Worker): boolean
+  isWorkerAway(worker: Worker): boolean
+  isWorkerSuspended(worker: Worker): boolean
+  isWorkerOnCall(worker: Worker): boolean
+}
+
+export interface BaseOrganizationEntityStatusChecker<Entity = unknown> {
+  isActive(entity: Entity): boolean
+  isInactive(entity: Entity): boolean
+  isOnReview(entity: Entity): boolean
+  isTerminated(entity: Entity): boolean
+}
 
 // 
 export type Role = {
@@ -202,7 +216,6 @@ export type Worker = {
   middleName?: string
   lastName: string
   nickname?: string
-  suffix?: string
 
   gender: WorkerGender
 

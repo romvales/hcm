@@ -5,36 +5,35 @@ import type {
 } from './worker'
 
 //
-export abstract class HCMOrganizationService {
-  
-  static createOrg(
+export abstract class HCMOrganizationService implements HCMPendingJoinRequestService<Organization> {
+  createOrg(
     name: string,
     industry: OrganizationIndustry,
     overrideIndustry?: string
   ): Organization
 
-  static async getOrgById(organizationId: number): Promise<Organization>
-  static async removeOrgById<T>(organizationId: number): Promise<T>
-  static async saveOrg<T>(org: Organization): Promise<T>
+  async getOrgById(organizationId: number): Promise<Organization>
+  async removeOrgById<T>(organizationId: number): Promise<T>
+  async saveOrg<T>(org: Organization): Promise<T>
 
-  static changeOrgName<T>(org: Organization, name: string): T
-  static changeOrgIndustry<T>(org: Organization, industry: OrganizationIndustry, overrideIndustry?: string): T
-  static changeOrgStatus<T>(org: Organization, status: OrganizationStatus): T
+  changeOrgName<T>(org: Organization, name: string): T
+  changeOrgIndustry<T>(org: Organization, industry: OrganizationIndustry, overrideIndustry?: string): T
+  changeOrgStatus<T>(org: Organization, status: OrganizationStatus): T
 
-  static async removeWorkerById<T>(workerId: number): Promise<T>
-  static async addToOrgById<T>(org: Organization, workerId: number): Promise<T>
+  async removeWorkerById<T>(workerId: number): Promise<T>
+  async addToOrgById<T>(org: Organization, workerId: number): Promise<T>
 
-  static async getOrgCreator(org: Organization): Promise<Worker>
+  async getOrgCreator(org: Organization): Promise<Worker>
 }
 
 //
 export interface HCMPendingJoinRequestService<Entity = unknown> {
-  static async sendRequest<T>(entity: Entity, recepientId: number): Promise<T>
-  static async cancelRequest<T>(entity: Entity, recepientId: number): Promise<T>
+  async sendRequest<T>(entity: Entity, recepientId: number): Promise<T>
+  async cancelRequest<T>(entity: Entity, recepientId: number): Promise<T>
 
-  static async getPendingRequests(entity: Entity): Promise<PendingJoinRequest[]>
-  static async acceptPendingRequest<T>(entity: Entity, requestId: number): Promise<T>
-  static async declinePendingRequest<T>(entity: Entity, requestId: number): Promise<T>
+  async getPendingRequests(entity: Entity): Promise<PendingJoinRequest[]>
+  async acceptPendingRequest<T>(entity: Entity, requestId: number): Promise<T>
+  async declinePendingRequest<T>(entity: Entity, requestId: number): Promise<T>
 }
 
 //

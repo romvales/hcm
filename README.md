@@ -40,6 +40,15 @@ Below are the types, enums and interfaces that will be outlined:
 4. saveRole()
 5. changeRoleName()
 6. changeRoleStatus()
+7. getRoleShifts()
+8. addStandardShift()
+9. updateStandardShift()
+10. containsCompleteStandardShift()
+11. isActive()
+12. isInactive()
+13. isOnReview()
+14. isTerminated()  
+15. isDisabled()
 
 - HCMTeamService
 
@@ -52,10 +61,15 @@ Below are the types, enums and interfaces that will be outlined:
 7. getWorkerMembers()
 8. addWorkerToTeam(team: Team, worker: Worker)
 9. removeWorkerFromTeam(team: Team, worker: Worker)
+10. isActive()
+11. isInactive()
+12. isOnReview()
+13. isTerminated()
+14. isDisabled()
 
 - HCMWorkerService
 
-1. createWorker(name: { firstName: string, middleName: string, lastName: string }, email: string, mobileNumber: string)
+1. createWorker(name: { firstName: string, middleName: string, lastName: string }, email: string, mobileNumber?: string, birthdate?: number)
 2. getWorkerById(workerId: number)
 3. deleteWorkerById(workerId: number)
 4. saveWorker(worker: Worker)
@@ -76,7 +90,7 @@ Below are the types, enums and interfaces that will be outlined:
 19. getOrganization()
 20. getRole()
 21. getTeam()
-22. hasOverridenStandardsShift()
+22. hasOverridenStandardRoleShift()
 23. isWorkerHired(worker: Worker)
 24. isWorkerOnLeave(worker: Worker)
 25. isWorkerRemote(worker: Worker)
@@ -86,6 +100,13 @@ Below are the types, enums and interfaces that will be outlined:
 29. isWorkerAway(worker: Worker)
 30. isWorkerSuspended(worker: Worker)
 31. isWorkerOnCall(worker: Worker)
+
+- #BaseOrganizationEntityStatusChecker(Entity = unknown)
+
+1. isActive(entity: Entity)
+2. isInactive(entity: Entity)
+3. isOnReview(entity: Entity)
+4. isTerminated(entity: Entity)
 
 2. Shifts
 
@@ -100,8 +121,28 @@ Below are the types, enums and interfaces that will be outlined:
 - Attendance
 - enum:AttendanceType
 - enum:AttendanceStatus
+- enum:AttendancePerformanceLabel
+- enum:AttendanceClockInType
+- enum:AttendanceClockOutType
 
 - HCMAttendanceService
+
+1. createAttendance(worker: Worker, clockIn: number)
+2. getAttendanceById(attendanceId: number)
+3. removeAttendanceById(attendanceId: number)
+4. saveAttendance(attendance: Attendance)
+4. changeStatus(attendance: Attendance, status: AttendanceStatus)
+5. changeType(attendance: Attendance, type: AttendanceType)
+6. changePerfLabel(attendance: Attendance, label: AttendancePerfomanceLabel)
+7. changeClockInType(attendance: Attendance, type: AttendanceClockInType)
+8. changeClockOutType(attendance: Attendance, type: AttendanceClockOutType)
+9. clockIn(worker: Worker, type: AttendanceClockInType)
+10. clockOut(worker: Worker, type: AttendanceClockOutType)
+11. getShift(attendance: Attendance)
+12. isLate(attendance: Attendance)
+13. isOverride(attendance: Attendance)
+14. isHoliday(attendance: Attendance)
+15. isBreak(attendance: Attendance)
 
 4. Payroll
 
@@ -110,6 +151,9 @@ Below are the types, enums and interfaces that will be outlined:
 - enum:PayrollPayCycleType
 
 5. Compute
+
+
+
 
 
 6. Compensation
@@ -126,8 +170,11 @@ Below are the types, enums and interfaces that will be outlined:
 - enum:WorkerPayInfoType
 
 - HCMWorkerPayInfoService
+
 - HCMCompensationService
+
 - HCMAdditionService
+
 - HCMDeductionService
 
 6. Organization
@@ -141,6 +188,8 @@ Below are the types, enums and interfaces that will be outlined:
 
 - HCMOrganizationService
 
+TODO: Every organization should have a configuration that enables leader to change and modify certain conditions within the organization.
+
 1. createOrg(name: string, industry: OrganizationIndustry, overrideIndustry?: string)
 2. getOrgById(organizationId: number)
 3. removeOrgById(organizationId: number)
@@ -151,11 +200,17 @@ Below are the types, enums and interfaces that will be outlined:
 8. removeWorkerById(org: Organization, workerId: number)
 9. addToOrgbyId(org: Organization, workerId: number)
 10. getOrgCreator()
+11. isActive()
+12. isInactive()
+13. isSuspended()
+14. isDissolved()
 
-- HCMPendingJoinRequestService(Entity = unknown)
+- #HCMPendingJoinRequestService(Entity = unknown)
 
 1. sendRequest(entity: Entity, recepientId: number)
 2. cancelRequest(entity: Entity, recepientId: number)
 3. getPendingRequests(entity: Entity)
 4. acceptPendingRequest(entity: Entity, requestId: number)
 5. declinePendingRequest(entity: Entity, requestId: number)
+
+7. Client
