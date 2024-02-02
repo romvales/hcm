@@ -8,20 +8,64 @@ import type {
 //
 export abstract class HCMWorkerPayInfoService {
 
+  createWorkerPayInfo(params: {
+
+  }): WorkerPayInfo
+
+  async getWorkerPayInfo(worker: Worker): Promise<WorkerPayInfo>
+  async removeWorkerPayInfo<T>(worker: Worker): Promise<WorkerPayInfoOverride>
+  async saveWorkerPayInfo<T>(payInfo: WorkerPayInfo): Promise<T>
+
 }
 
 //
 export abstract class HCMCompensationService {
 
+  createCompensation(params: {
+    worker: Worker
+    periodStart: number
+    periodEnd: number
+  }): Compensation
+
+  async getCompensationById(compensationId: number): Promise<Compensation>
+  async removeCompensationById<T>(compensationId: number): Promise<T>
+  async saveCompensation<T>(compensation: Compensation): Promise<T>
+
+  getGrossValue(compensation: Compensation): number | null
+  getAddedValue(compensation: Compensation): number | null
+  getDeductedValue(compensation: Compensation): number | null
+  getValue(compensation: Compensation): number | null
+
+  async getAdditions(): Promise<Addition[]>
+  async getDeductions(): Promise<Deduction[]>
+
+  changeStatus(compensation: Compensation, status: CompensationStatus)
+  
 }
 
 //
 export abstract class HCMAdditionService {
 
+  createAddition(params: {
+
+  })
+
+  async getAdditionById(additionId: number): Promise<Addition>
+  async removeAdditionById<T>(additionId: number): Promise<T>
+  async saveAddition<T>(additionId: number): Promise<T>
+
 }
 
 //
 export abstract class HCMDeductionService {
+
+  createDeduction(params: {
+
+  })
+
+  async getDeductionById(deductionId: number): Promise<Deduction>
+  async removeDeductionById<T>(deductionId: number): Promise<T>
+  async saveDeduction<T>(deductionId: number): Promise<T>
 
 }
 
@@ -48,13 +92,48 @@ export type WorkerPayInfo = {
 
   // Same with the above collection, this contains the deductions the worker received.
   deductions?: Deduction[]
+
+  hourly?: number
+  salary?: number
+  nonExempt?: number
 }
 
-//
+// An HR can override a worker pay info either temporarily, for a given period,
+// or permanently.
 export type WorkerPayInfoOverride = {
   id: number
   payId: number
+  createdById: number
+  updatedById?: number
+
+  createdAt: number
+  lastUpdatedAt?: number
+  startsOn?: number
+  endsOn?: number
+  
   pay: WorkerPayInfo
+  type: WorkerPayInfoType
+  status?: WorkerPayInfoOverrideStatus
+
+  //
+  isEnabled?: boolean
+
+  //
+  additions?: Addition[]
+
+  //
+  deductions?: Deduction[]
+
+  //
+  hourly?: number
+  salary?: number
+  nonExempt?: number
+}
+
+export enum WorkerPayInfoOverrideStatus {
+  PENDING,
+  ONGOING,
+  OVERRIDE,
 }
 
 //
@@ -67,6 +146,9 @@ export type Compensation = {
 
   createdAt: number
   lastUpdatedAt?: number
+  paidAt?: number
+  approvedAt?: number
+  rejectedAt?: number
 
   createdBy: Worker
   updatedBy?: Worker
@@ -79,18 +161,21 @@ export type Compensation = {
   additions?: Addition[]
   deductions?: Deduction[]
 
+  // 
+  periodStart: number
+  periodEnd: number
+
   // A value which holds the gross pay of the worker
   gvalue: number
 
   // Represents a computed value that is added to the final take-home pay of the worker
-  bvalue?: number
+  avalue?: number
 
   // Computed value that denotes the total deductions in the take-home pay.
   dvalue?: number
 
-  //
+  // 
   value: number
-  
 }
 
 // Additions is a value added to the final pay for a worker on any specific pay period.

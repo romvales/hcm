@@ -150,10 +150,14 @@ Below are the types, enums and interfaces that will be outlined:
 - enum:PayrollStatus
 - enum:PayrollPayCycleType
 
+- HCMPayrollService
+
+1. createPayroll(params: CreatePayrollParams)
+2. getPayrollById()
+3. removePayrollById()
+4. savePayroll()
+
 5. Compute
-
-
-
 
 
 6. Compensation
@@ -171,11 +175,40 @@ Below are the types, enums and interfaces that will be outlined:
 
 - HCMWorkerPayInfoService
 
+1. createWorkerPayInfo(params: WorkerPayInfoParams)
+2. getWorkerPayInfo(worker: Worker)
+3. removeWorkerPayInfo(worker: Worker)
+4. saveWorkerPayInfo(payInfo: WorkerPayInfo)
+
+
 - HCMCompensationService
+
+1. createCompensation(params: CompensationParams)
+2. getCompensationById(compensationId: number)
+3. removeCompensationById(compensationId: number)
+4. saveCompensation(compensation: Compensation)
+5. getGrossValue(compensation: Compensation)
+6. getAddedValue(compensation: Compensation)
+7. getDeductedValue(compensation: Compensation)
+8. getValue(compensation: Compensation)
+9. getAdditions(compensation: Compensation)
+10. getDeductions(compensation: Compensation)
+11. changeStatus(compensation: Compensation, status: CompensationStatus)
+
 
 - HCMAdditionService
 
+1. createAddition(params: AdditionParams)
+2. getAdditionById(additionId: number)
+3. removeAdditionById(additionId: number)
+4. saveAddition(addition: Addition)
+
 - HCMDeductionService
+
+1. createDeduction(params: DeductionParams)
+2. getDeductionById(deductionId: number)
+3. removeDeductionById(deductionId: number)
+4. saveDeduction(deduction: Deduction)
 
 6. Organization
 

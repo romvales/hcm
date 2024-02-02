@@ -104,7 +104,8 @@ export enum OrganizationIndustry {
 }
 
 export enum PendingJoinRequestInvitationType {
-  
+  ORGANIZATION,
+  WORKER,
 }
 
 export enum PendingJoinRequestStatus {

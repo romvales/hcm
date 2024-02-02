@@ -4,7 +4,15 @@ import { Organization } from './index.d'
 import { Worker } from './worker'
 
 //
-export abstract class PayrollService {
+export abstract class HCMPayrollService {
+
+  async createPayroll(params: {
+
+  }): Promise<Payroll>
+
+  async getPayrollById(payrollId: number): Promise<Payroll>
+  async removePayrollById<T>(payrollId: number): Promise<T>
+  async savePayroll<T>(payroll: Payroll): Promise<T>
 
 }
 
@@ -26,6 +34,9 @@ export type Payroll = {
   payCycleType?: PayrollPayCycleType
   status?: PayrollStatus
   organization: Organization
+
+  periodStart: number
+  periodEnd: number
 
   compensations?: Compensation[]
 
