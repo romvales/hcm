@@ -1,5 +1,6 @@
 // @tags-mvp
 
+import { PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js'
 import type {
   HCMPendingJoinRequestService,
   Organization, PendingJoinRequest
@@ -37,17 +38,25 @@ export abstract class HCMTeamService implements BaseOrganizationEntityStatusChec
 }
 
 export abstract class HCMWorkerService implements HCMPendingJoinRequestService<Worker> {
-  createWorker(
-    name: { firstName: string, middleName: string, lastName: string },
+  
+  createWorker(params: {
+    pictureUrl: string,
+    createdById: number,
+    firstName: string, 
+    middleName?: string, 
+    lastName: string,
     email: string,
     username: string,
+    gender: WorkerGender,
     mobileNumber?: string,
-    birthdate?: number
-  ): Worker
+    birthdate?: number,
+  }): Worker
 
-  async getWorkerById(id: number): Promise<Worker>
+  async getWorkerById(id: number): Promise<Worker | void>
   async deleteWorkerById<T>(id: number): Promise<T>
-  async saveWorker<T>(worker: Worker): Promise<T>
+  
+  async saveWorker(updator: Worker | null, worker: Worker): Promise<PostgrestSingleResponse<null> | undefined>
+  async saveWorker<T>(updator: Worker | null, worker: Worker): Promise<T>
 
   changeWorkerStatus<T>(worker: Worker, status: WorkerStatus): T
   changeWorkerType<T>(worker: Worker, type: WorkerType): T
@@ -55,21 +64,27 @@ export abstract class HCMWorkerService implements HCMPendingJoinRequestService<W
   changeWorkerTeam<T>(worker: Worker, newTeam: Team): T
   changeWorkerPayCycle<T>(worker: Worker, newPayCycle: WorkerPayCycle): T
 
-  suspend<T>(worker: Worker): T
-  terminate<T>(worker: Worker): T
-  resign<T>(worker: Worker): T
+  async suspend<T>(worker: Worker, orgId: number): Promise<T>
+  async terminate<T>(worker: Worker, orgId: number): Promise<T>
+  async resign<T>(worker: Worker, orgId: number): Promise<T>
 
   addWorkerAddress<T>(worker: Worker, address: WorkerAddress): T
+  addWorkerAddress(worker: Worker, address: WorkerAddress): this
+
   addIdentityCards<T>(worker: Worker, identityCards: WorkerIdentityCard[]): T
+  addIdentityCards(worker: Worker, identityCards: WorkerIdentityCard[]): this
+}
+
+export abstract class HCMWorkerOrganizationService {
+
+  async getOrganizations(worker: Worker): Promise<Organization[] | undefined>
+  async getRoles(worker: Worker): Promise<Role[] | undefined>
+  async getTeams(worker: Worker): Promise<Team[] | undefined>
 
   getWorkerType(worker: Worker): WorkerType
   getWorkerStatus(worker: Worker): WorkerStatus
   getAddresses(worker: Worker): WorkerAddress[]
   getIdentityCards(worker: Worker): WorkerIdentityCard[]
-
-  async getOrganization(worker: Worker): Promise<Organization | undefined>
-  async getRole(worker: Worker): Promise<Role | undefined>
-  async getTeam(worker: Worker): Promise<Team | undefined>
 
   hasOverridenStandardRoleShift(worker: Worker): boolean
   isWorkerHired(worker: Worker): boolean
@@ -134,9 +149,13 @@ export type Team = {
 
 // 
 export type Worker = {
-  id: number
+  id?: number
   createdById?: number
   updatedById?: number
+
+  // Indicates whether the worker is online, offline, or away. This is visible to all organizations
+  // and workers in the platform.
+  indicator: WorkerIndicator
 
   // Represents the collection of identity cards uploaded by the worker
   identityCards?: WorkerIdentityCard[]
@@ -144,7 +163,7 @@ export type Worker = {
   createdBy?: Worker
   updatedBy?: Worker
 
-  createdAt: number
+  createdAt?: number
   lastUpdatedAt?: number
 
   pictureUrl?: string
@@ -165,7 +184,7 @@ export type Worker = {
   addresses?: WorkerAddress[]
 }
 
-//
+// Indicates what information a worker has within an organization.
 export type WorkerOrganizationInfo = {
   id: number
   organizationId: number
@@ -173,6 +192,7 @@ export type WorkerOrganizationInfo = {
   hiredById?: number
   scheduledSuspensionAt?: number
 
+  //
   status?: WorkerStatus
   type?: WorkerType
 
@@ -247,6 +267,7 @@ export type WorkerIdentityCard = {
   frontImageUrl: string
   backImageUrl: string
 
+  name: string
   extractedInfo?: unknown
 }
 
@@ -276,7 +297,14 @@ export enum WorkerGender {
 }
 
 //
-export enum WorkerStatus {
+export enum WorkerIndicator {
+  OFFLINE,
+  ONLINE,
+  AWAY,
+}
+
+//
+export enum WorkerOrganizationStatus {
   OFFLINE,
   ONLINE,
   RONLINE,
@@ -291,7 +319,7 @@ export enum WorkerStatus {
 }
 
 //
-export enum WorkerType {
+export enum WorkerOrganizationType {
   PART,
   FULL,
   SEASONAL,
@@ -300,13 +328,14 @@ export enum WorkerType {
 }
 
 //
-export enum WorkerPayCycle {
+export enum WorkerOrganizationPayCycle {
   WEEKLY,
   BIWEEKLY,
   SEMIMONTHLY,
   MONTHLY,
 }
 
+//
 export enum TeamStatus {
   ACTIVE,
   INACTIVE,
@@ -314,6 +343,7 @@ export enum TeamStatus {
   TERMINATED,
 }
 
+//
 export enum RoleStatus {
   ACTIVE,
   INACTIVE,

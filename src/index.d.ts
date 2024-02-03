@@ -48,6 +48,8 @@ export type Organization = {
 
   status?: OrganizationStatus
 
+  // TODO: Add fields that are necessary for an organization
+
   name: string
   industry?: OrganizationIndustry
   overrideIndustry?: string
