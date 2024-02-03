@@ -135,27 +135,49 @@ export type Team = {
 // 
 export type Worker = {
   id: number
-  createdById: number
+  createdById?: number
   updatedById?: number
-  hiredBy?: number
-  organizationId?: number
-  roleId?: number
-  teamId?: number
 
   // Represents the collection of identity cards uploaded by the worker
   identityCards?: WorkerIdentityCard[]
 
-  createdBy: Worker
+  createdBy?: Worker
   updatedBy?: Worker
-  hiredBy?: Worker
 
   createdAt: number
   lastUpdatedAt?: number
 
+  pictureUrl?: string
+
+  firstName: string
+  middleName?: string
+  lastName: string
+  nickname?: string
+
+  gender: WorkerGender
+
+  birthdate?: number
+
+  username?: string
+  email: string
+  mobile? : string
+
+  addresses?: WorkerAddress[]
+}
+
+//
+export type WorkerOrganizationInfo = {
+  id: number
+  organizationId: number
+  workerId: number
+  hiredById?: number
   scheduledSuspensionAt?: number
 
+  status?: WorkerStatus
+  type?: WorkerType
+
   // When was the employee hired in the organization?
-  hiredAt: number
+  hiredAt?: number
   
   // A timestamp that represents when was the worker suspended
   suspendedAt?: number
@@ -174,15 +196,6 @@ export type Worker = {
   
   // What assigned role does this worker have? @IMPORTANT: if empty, do not include to the payroll.
   role?: Role
-
-  //
-  organization?: Organization
-
-  // Used to indicate what pay cycle is a worker in the payroll
-  payCycle?: WorkerPayCycle
-
-  status?: WorkerStatus
-  type?: WorkerType
 
   // When an worker is onboarded to the team as remote, make sure that
   // isRemote is toggled to true
@@ -210,28 +223,21 @@ export type Worker = {
   // Overrides the standard shift assigned to the role for a specific worker.
   overridesShift?: StandardShift[]
 
-  pictureUrl?: string
+  //
+  organization?: Organization
 
-  firstName: string
-  middleName?: string
-  lastName: string
-  nickname?: string
-
-  gender: WorkerGender
-
-  birthdate?: number
-
-  username?: string
-  email: string
-  mobile? : string
-
-  addresses?: WorkerAddress[]
+  // Used to indicate what pay cycle is a worker in the payroll
+  payCycle?: WorkerPayCycle
 }
 
 //
 export type WorkerIdentityCard = {
   id: number
+  workerId: number
+  createdById: number
+  updatedById: number
 
+  worker: Worker
   createdBy: Worker
   updatedBy?: Worker
   

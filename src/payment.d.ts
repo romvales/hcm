@@ -140,7 +140,7 @@ export enum WorkerPayInfoOverrideStatus {
 export type Compensation = {
   id: number
   createdById: number
-  updatedById: number
+  updatedById?: number
   organizationId: number
   workerId: number
 

@@ -22,6 +22,7 @@ Below are the types, enums and interfaces that will be outlined:
 - Role
 - Team
 - Worker
+- WorkerOrganizationInfo
 - WorkerIdentityCard
 - WorkerAddress
 - enum:WorkerPayCycle

@@ -52,7 +52,7 @@ export abstract class HCMWorkerShiftService {
 export type Attendance = {
   id: number
   workerId: number
-  shiftId: number
+  shiftId?: number
   oshiftId?: number
   createdById: number
   updatedById?: number
@@ -167,7 +167,7 @@ export type StandardShift = {
 }
 
 // Override shift is a scheduled override shift assigned to a specific
-// worker in the company.
+// worker in an organization.
 export type OverrideShift = {
   id: number
   createdById: number
@@ -175,20 +175,32 @@ export type OverrideShift = {
   organizationId?: number
   workerId: number
 
-  createdBy: Worker
-  updatedBy?: Worker
-
   createdAt: number
   lastUpdatedAt?: number
+  verifiedAt?: number
+  completedAt?: number
+  
   startsOn?: number
   endsOn?: number
+
+  createdBy: Worker
+  updatedBy?: Worker
   
   organization?: Organization
   assignedTo: Worker
   day: StandardShiftDay
+  status: OverrideShiftStatus
   
   overrideClockIn: number
   overrideClockOut: number
+}
+
+//
+export enum OverrideShiftStatus {
+  PENDING,
+  VERIFIED,
+  ASSIGNED,
+  DONE
 }
 
 // 
@@ -199,4 +211,5 @@ enum StandardShiftDay {
   THURSDAY,
   FRIDAY,
   SATURDAY,
+  SUNDAY,
 }

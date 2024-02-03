@@ -2,6 +2,9 @@
   "name": "hrms",
   "module": "src/index.ts",
   "type": "module",
+  "scripts": {
+    "supabase": "supabase"
+  },
   "devDependencies": {
     "bun-types": "latest",
     "supabase": "^1.136.3"
