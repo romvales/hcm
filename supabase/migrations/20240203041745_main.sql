@@ -1,6 +1,7 @@
 
-CREATE SCHEMA collection;
+CREATE SCHEMA IF NOT EXISTS collection;
 
+DROP TYPE IF EXISTS WorkerStatus CASCADE;
 CREATE TYPE WorkerStatus AS enum (
   'OFFLINE',
   'ONLINE',
@@ -14,6 +15,7 @@ CREATE TYPE WorkerStatus AS enum (
   'ONCALL'
 );
 
+DROP TYPE IF EXISTS WorkerType CASCADE;
 CREATE TYPE WorkerType AS enum (
   'PART',
   'FULL',
@@ -22,6 +24,7 @@ CREATE TYPE WorkerType AS enum (
   'LEASED'
 );
 
+DROP TYPE IF EXISTS WorkerPayCycle CASCADE;
 CREATE TYPE WorkerPayCycle AS enum (
   'WEEKLY',
   'BIWEEKLY',
@@ -32,6 +35,7 @@ CREATE TYPE WorkerPayCycle AS enum (
   'CUSTOM'
 );
 
+DROP TYPE IF EXISTS RoleStatus CASCADE;
 CREATE TYPE RoleStatus AS enum (
   'ACTIVE',
   'INACTIVE',
@@ -39,6 +43,7 @@ CREATE TYPE RoleStatus AS enum (
   'TERMINATED'
 );
 
+DROP TYPE IF EXISTS TeamStatus CASCADE;
 CREATE TYPE TeamStatus AS enum (
   'ACTIVE',
   'INACTIVE',
@@ -46,12 +51,14 @@ CREATE TYPE TeamStatus AS enum (
   'TERMINATED'
 );
 
+DROP TYPE IF EXISTS WorkerGender CASCADE;
 CREATE TYPE WorkerGender AS enum (
   'MALE',
   'FEMALE',
   'OTHER'
 );
 
+DROP TYPE IF EXISTS AttendancePerformanceLabel CASCADE;
 CREATE TYPE AttendancePerformanceLabel AS enum (
   'BELOW',
   'POOR',
@@ -60,6 +67,7 @@ CREATE TYPE AttendancePerformanceLabel AS enum (
   'PRODUCTIVE'
 );
 
+DROP TYPE IF EXISTS AttendanceClockInType CASCADE;
 CREATE TYPE AttendanceClockInType AS enum (
   'ONCALLSHIFT',
   'HOLIDAYSHIFT',
@@ -67,6 +75,7 @@ CREATE TYPE AttendanceClockInType AS enum (
   'NORMALSHIFT'
 );
 
+DROP TYPE IF EXISTS AttendanceClockOutType CASCADE;
 CREATE TYPE AttendanceClockOutType AS enum (
   'LUNCHTIME',
   'BREAKTIME',
@@ -76,6 +85,7 @@ CREATE TYPE AttendanceClockOutType AS enum (
   'CUSTOM'
 );
 
+DROP TYPE IF EXISTS AttendanceType CASCADE;
 CREATE TYPE AttendanceType AS enum (
   'ONCALL',
   'DAYOFF',
@@ -83,6 +93,7 @@ CREATE TYPE AttendanceType AS enum (
   'NIGHT'
 );
 
+DROP TYPE IF EXISTS AttendanceStatus CASCADE;
 CREATE TYPE AttendanceStatus AS enum (
   'PRESENT',
   'LATE',
@@ -91,6 +102,7 @@ CREATE TYPE AttendanceStatus AS enum (
   'OVERTIME'
 );
 
+DROP TYPE IF EXISTS StandardShiftDay CASCADE;
 CREATE TYPE StandardShiftDay AS enum (
   'MONDAY',
   'TUESDAY',
@@ -101,6 +113,7 @@ CREATE TYPE StandardShiftDay AS enum (
   'SUNDAY'
 );
 
+DROP TYPE IF EXISTS OverrideShiftStatus CASCADE;
 CREATE TYPE OverrideShiftStatus AS enum (
   'PENDING',
   'VERIFIED',
@@ -108,6 +121,7 @@ CREATE TYPE OverrideShiftStatus AS enum (
   'DONE'
 );
 
+DROP TYPE IF EXISTS CompensationStatus CASCADE;
 CREATE TYPE CompensationStatus AS enum (
   'PENDING',
   'APPROVED',
@@ -115,6 +129,7 @@ CREATE TYPE CompensationStatus AS enum (
   'PAID'
 );
 
+DROP TYPE IF EXISTS AdditionScope CASCADE;
 CREATE TYPE AdditionScope AS enum (
   'GLOBAL',
   'ROLE',
@@ -122,6 +137,7 @@ CREATE TYPE AdditionScope AS enum (
   'WORKER'
 );
 
+DROP TYPE IF EXISTS AdditionType CASCADE;
 CREATE TYPE AdditionType AS enum (
   'REIMBURSEMENT',
   'BONUS',
@@ -129,6 +145,7 @@ CREATE TYPE AdditionType AS enum (
   'OTHER'
 );
 
+DROP TYPE IF EXISTS AdditionStatus CASCADE;
 CREATE TYPE AdditionStatus AS enum (
   'PENDING',
   'VERIFIED',
@@ -137,6 +154,7 @@ CREATE TYPE AdditionStatus AS enum (
   'DISABLED'
 );
 
+DROP TYPE IF EXISTS DeductionScope CASCADE;
 CREATE TYPE DeductionScope AS enum (
   'GLOBAL',
   'ROLE',
@@ -144,6 +162,7 @@ CREATE TYPE DeductionScope AS enum (
   'WORKER'
 );
 
+DROP TYPE IF EXISTS DeductionType CASCADE;
 CREATE TYPE DeductionType AS enum (
   'TAX',
   'BENEFIT',
@@ -152,6 +171,7 @@ CREATE TYPE DeductionType AS enum (
   'OTHER'
 );
 
+DROP TYPE IF EXISTS DeductionStatus CASCADE;
 CREATE TYPE DeductionStatus AS enum (
   'PENDING',
   'VERIFIED',
@@ -160,12 +180,14 @@ CREATE TYPE DeductionStatus AS enum (
   'DISABLED'
 );
 
+DROP TYPE IF EXISTS WorkerPayInfoType CASCADE;
 CREATE TYPE WorkerPayInfoType AS enum (
   'HOURLY',
   'SALARY',
   'NONEXEMPT'
 );
 
+DROP TYPE IF EXISTS OrganizationStatus CASCADE;
 CREATE TYPE OrganizationStatus AS enum (
   'ACTIVE',
   'INACTIVE',
@@ -173,6 +195,7 @@ CREATE TYPE OrganizationStatus AS enum (
   'DISSOLVED'
 );
 
+DROP TYPE IF EXISTS OrganizationIndustry CASCADE;
 CREATE TYPE OrganizationIndustry AS enum (
   'AGRICULTURE',
   'PRODUCTION',
@@ -197,11 +220,13 @@ CREATE TYPE OrganizationIndustry AS enum (
   'OTHER'
 );
 
+DROP TYPE IF EXISTS PendingJoinRequestInvitationType CASCADE;
 CREATE TYPE PendingJoinRequestInvitationType AS enum (
   'ORGANIZATION',
   'WORKER'
 );
 
+DROP TYPE IF EXISTS PendingJoinRequestStatus CASCADE;
 CREATE TYPE PendingJoinRequestStatus AS enum (
   'PENDING',
   'ACCEPTED',
@@ -209,12 +234,15 @@ CREATE TYPE PendingJoinRequestStatus AS enum (
   'EXPIRED'
 );
 
+DROP TYPE IF EXISTS PayrollStatus CASCADE;
 CREATE TYPE PayrollStatus AS enum (
   'PENDING',
   'VERIFIED',
   'PAID'
 );
 
+
+DROP TYPE IF EXISTS PayrollPayCycleType CASCADE;
 CREATE TYPE PayrollPayCycleType AS enum (
   'WEEKLY',
   'BIWEEKLY',
@@ -225,7 +253,7 @@ CREATE TYPE PayrollPayCycleType AS enum (
   'CUSTOM'
 );
 
-CREATE TABLE public.workers (
+CREATE TABLE IF NOT EXISTS public.workers (
   id bigint generated by default as identity primary key,
 
   -- When created by someone, manually set an 
@@ -251,7 +279,7 @@ CREATE TABLE public.workers (
   addresses json not null default '[]'::json
 );
 
-CREATE TABLE public.workerIdentityCards (
+CREATE TABLE IF NOT EXISTS public.workerIdentityCards (
   id bigint generated by default as identity primary key,
   -- Who owns this identity card?
   workerId bigint not null references public.workers(id) on delete cascade,
@@ -269,13 +297,13 @@ CREATE TABLE public.workerIdentityCards (
 );
 
 -- @collection
-CREATE TABLE collection.workersIdentityCards (
+CREATE TABLE IF NOT EXISTS collection.workersIdentityCards (
   id bigint generated by default as identity primary key, 
   ownerId bigint not null references public.workers(id) on delete cascade,
   cardId bigint not null references public.workerIdentityCards(id) on delete cascade
 );
 
-CREATE TABLE public.organizations (
+CREATE TABLE IF NOT EXISTS public.organizations (
   id bigint generated by default as identity primary key,
 
   createdById bigint not null references public.workers(id) on delete set null,
@@ -283,7 +311,7 @@ CREATE TABLE public.organizations (
 );
 
 -- @collection
-CREATE TABLE collection.organizationsMembers (
+CREATE TABLE IF NOT EXISTS collection.organizationsMembers (
   id bigint generated by default as identity primary key,
   organizationId bigint not null references public.organizations(id) on delete cascade,
   workerId bigint not null references public.organizations(id) on delete cascade,
@@ -314,13 +342,13 @@ CREATE TABLE collection.organizationsMembers (
 );
 
 -- @collection
-CREATE TABLE collection.workerOrganizations (
+CREATE TABLE IF NOT EXISTS collection.workerOrganizations (
   id bigint generated by default as identity primary key,
   workerId bigint not null references public.organizations(id) on delete cascade,
   organizationId bigint not null references public.organizations(id) on delete cascade
 );
 
-CREATE TABLE public.pendingJoinRequests (
+CREATE TABLE IF NOT EXISTS public.pendingJoinRequests (
   id bigint generated by default as identity primary key,
   workerId bigint not null references public.workers(id) on delete cascade,
   organizationId bigint not null references public.workers(id) on delete cascade,
@@ -330,20 +358,20 @@ CREATE TABLE public.pendingJoinRequests (
 );
 
 -- @collection
-CREATE TABLE collection.organizationsPendingRequests (
+CREATE TABLE IF NOT EXISTS collection.organizationsPendingRequests (
   id bigint generated by default as identity primary key,
   organizationId bigint not null references public.organizations(id) on delete cascade,
   requestId bigint not null references public.pendingJoinRequests(id) on delete cascade
 );
 
 -- @collection
-CREATE TABLE collection.workerPendingRequests (
+CREATE TABLE IF NOT EXISTS collection.workerPendingRequests (
   id bigint generated by default as identity primary key,
   workerId bigint not null references public.workers(id) on delete cascade,
   requestId bigint not null references public.pendingJoinRequests(id) on delete cascade
 );
 
-CREATE TABLE public.standardShifts (
+CREATE TABLE IF NOT EXISTS public.standardShifts (
   id bigint generated by default as identity primary key,
   createdById bigint not null references public.workers(id) on delete set null,
   updatedById bigint not null references public.workers(id) on delete set null,
@@ -360,7 +388,7 @@ CREATE TABLE public.standardShifts (
 );
 
 -- Scheduled override shifts
-CREATE TABLE public.overrideShifts (
+CREATE TABLE IF NOT EXISTS public.overrideShifts (
   id bigint generated by default as identity primary key,
   organizationId bigint not null references public.organizations(id) on delete cascade,
   createdById bigint not null references public.workers(id) on delete set null,
@@ -384,7 +412,7 @@ CREATE TABLE public.overrideShifts (
   overrideClockOut time not null
 );
 
-CREATE TABLE public.attendances (
+CREATE TABLE IF NOT EXISTS public.attendances (
   id bigint generated by default as identity primary key,
   workerId bigint not null references public.workers(id) on delete set null,
   shiftId bigint null references public.standardShifts(id) on delete set null,
@@ -418,7 +446,7 @@ CREATE TABLE public.attendances (
   breakTime numeric not null default 0
 );
 
-CREATE TABLE public.roles (
+CREATE TABLE IF NOT EXISTS public.roles (
   id bigint generated by default as identity primary key,
   createdById bigint not null references public.workers(id) on delete set null,
   updatedById bigint null references public.workers(id) on delete set null,
@@ -433,20 +461,20 @@ CREATE TABLE public.roles (
 );
 
 -- @collection
-CREATE TABLE collection.workerRoles (
+CREATE TABLE IF NOT EXISTS collection.workerRoles (
   id bigint generated by default as identity primary key,
   roleId bigint not null references public.roles(id) on delete cascade,
   workerId bigint not null references public.roles(id) on delete cascade
 );
 
 -- @collection
-CREATE TABLE collection.rolesStandardShifts (
+CREATE TABLE IF NOT EXISTS collection.rolesStandardShifts (
   id bigint generated by default as identity primary key,
   roleId bigint not null references public.roles(id) on delete cascade,
   standardShiftId bigint not null references public.standardShifts(id) on delete cascade
 );
 
-CREATE TABLE public.teams (
+CREATE TABLE IF NOT EXISTS public.teams (
   id bigint generated by default as identity primary key,
   createdById bigint not null references public.workers(id) on delete cascade,
   updatedById bigint null references public.workers(id) on delete cascade,
@@ -461,13 +489,13 @@ CREATE TABLE public.teams (
 );
 
 -- @collection
-CREATE TABLE collection.teamsMembers (
+CREATE TABLE IF NOT EXISTS collection.teamsMembers (
   id bigint generated by default as identity primary key,
   teamId bigint not null references public.teams(id) on delete cascade,
   workerId bigint not null references public.workers(id) on delete cascade
 );
 
-CREATE TABLE public.compensations (
+CREATE TABLE IF NOT EXISTS public.compensations (
   id bigint generated by default as identity primary key,
   createdById bigint not null references public.workers(id) on delete set null,
   updatedById bigint null references public.workers(id) on delete set null,
@@ -491,7 +519,7 @@ CREATE TABLE public.compensations (
   value numeric not null default 0
 );
 
-CREATE TABLE public.additions (
+CREATE TABLE IF NOT EXISTS public.additions (
   id bigint generated by default as identity primary key,
   createdById bigint not null references public.workers(id) on delete set null,
   updatedById bigint null references public.workers(id) on delete set null,
@@ -511,7 +539,7 @@ CREATE TABLE public.additions (
   value numeric not null default 0
 );
 
-CREATE TABLE public.deductions (
+CREATE TABLE IF NOT EXISTS public.deductions (
   id bigint generated by default as identity primary key,
   createdById bigint not null references public.workers(id) on delete set null,
   updatedById bigint null references public.workers(id) on delete set null,
@@ -532,6 +560,6 @@ CREATE TABLE public.deductions (
   value numeric not null default 0
 );
 
-CREATE TABLE public.payrolls (
+CREATE TABLE IF NOT EXISTS public.payrolls (
   id bigint generated by default as identity primary key
 );
