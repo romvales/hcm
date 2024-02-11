@@ -25,11 +25,12 @@ Below are the types, enums and interfaces that will be outlined:
 - WorkerOrganizationInfo
 - WorkerIdentityCard
 - WorkerAddress
-- enum:WorkerPayCycle
+- enum:WorkerIndicator
+- enum:WorkerOrganizationPayCycle
 - enum:WorkerAddressType
 - enum:WorkerGender
-- enum:WorkerStatus
-- enum:WorkerType
+- enum:WorkerOrganizationStatus
+- enum:WorkerOrganizationType
 - enum:TeamStatus
 - enum:RoleStatus
 
@@ -48,7 +49,7 @@ Below are the types, enums and interfaces that will be outlined:
 11. isActive()
 12. isInactive()
 13. isOnReview()
-14. isTerminated()  
+14. isTerminated()
 15. isDisabled()
 
 - HCMTeamService
@@ -61,7 +62,7 @@ Below are the types, enums and interfaces that will be outlined:
 6. changeTeamStatus(status: TeamStatus)
 7. getWorkerMembers()
 8. addWorkerToTeam(team: Team, worker: Worker)
-9. removeWorkerFromTeam(team: Team, worker: Worker)
+9. deleteWorkerFromTeam(team: Team, worker: Worker)
 10. isActive()
 11. isInactive()
 12. isOnReview()
@@ -70,13 +71,25 @@ Below are the types, enums and interfaces that will be outlined:
 
 - HCMWorkerService
 
-1. createWorker(name: { firstName: string, middleName: string, lastName: string }, email: string, mobileNumber?: string, birthdate?: number)
+1. createWorker(email: string, username: string)
 2. getWorkerById(workerId: number)
 3. deleteWorkerById(workerId: number)
-4. saveWorker(updator: Worker | null, worker: Worker)
-5. addWorkerAddress(updator: Worker | null, worker: Worker, address: WorkerAddress)
-6. addIdentityCards(updator: Worker | null, worker: Worker, cards: WorkerIdentityCard[])
-7. changeWorkerIndicator(worker: Worker, indicator: WorkerIndicator)
+4. saveWorker()
+5. addWorkerAddress(address: WorkerAddress)
+6. addIdentityCards(cards: WorkerIdentityCard[])
+7. changeWorkerIndicator(indicator: WorkerIndicator)
+8. assignUserToWorker(user: User | null) -> supabaseImplementation
+9. getWorkerByUser(user: User) -> supabaseImplementation
+10. getIdentityCards()
+11. getAddresses()
+12. deleteIdentityCardById(id: number)
+13. saveWorkerIdentityCard()
+14. changeName(name: { firstName: string, lastName: string, ... })
+15. changePictureUrl(pictureUrl: string)
+16. changeBirthdate(birthdate: number)
+17. changeEmailAddress(newEmail: string)
+18. changeMobileNumber(newMobile: string)
+19. changeGender(gender: WorkerGender)
 
 - HCMWorkerOrganizationInfoService
 
@@ -140,7 +153,7 @@ Below are the types, enums and interfaces that will be outlined:
 
 1. createAttendance(worker: Worker, clockIn: number)
 2. getAttendanceById(attendanceId: number)
-3. removeAttendanceById(attendanceId: number)
+3. deleteAttendanceById(attendanceId: number)
 4. saveAttendance(attendance: Attendance)
 4. changeStatus(attendance: Attendance, status: AttendanceStatus)
 5. changeType(attendance: Attendance, type: AttendanceType)
@@ -165,7 +178,7 @@ Below are the types, enums and interfaces that will be outlined:
 
 1. createPayroll(params: CreatePayrollParams)
 2. getPayrollById()
-3. removePayrollById()
+3. deletePayrollById()
 4. savePayroll()
 
 5. Compute
@@ -188,7 +201,7 @@ Below are the types, enums and interfaces that will be outlined:
 
 1. createWorkerPayInfo(params: WorkerPayInfoParams)
 2. getWorkerPayInfo(worker: Worker)
-3. removeWorkerPayInfo(worker: Worker)
+3. deleteWorkerPayInfo(worker: Worker)
 4. saveWorkerPayInfo(payInfo: WorkerPayInfo)
 
 
@@ -196,7 +209,7 @@ Below are the types, enums and interfaces that will be outlined:
 
 1. createCompensation(params: CompensationParams)
 2. getCompensationById(compensationId: number)
-3. removeCompensationById(compensationId: number)
+3. deleteCompensationById(compensationId: number)
 4. saveCompensation(compensation: Compensation)
 5. getGrossValue(compensation: Compensation)
 6. getAddedValue(compensation: Compensation)
@@ -211,14 +224,14 @@ Below are the types, enums and interfaces that will be outlined:
 
 1. createAddition(params: AdditionParams)
 2. getAdditionById(additionId: number)
-3. removeAdditionById(additionId: number)
+3. deleteAdditionById(additionId: number)
 4. saveAddition(addition: Addition)
 
 - HCMDeductionService
 
 1. createDeduction(params: DeductionParams)
 2. getDeductionById(deductionId: number)
-3. removeDeductionById(deductionId: number)
+3. deleteDeductionById(deductionId: number)
 4. saveDeduction(deduction: Deduction)
 
 6. Organization
@@ -236,13 +249,13 @@ TODO: Every organization should have a configuration that enables leader to chan
 
 1. createOrg(name: string, industry: OrganizationIndustry, overrideIndustry?: string)
 2. getOrgById(organizationId: number)
-3. removeOrgById(organizationId: number)
-4. saveOrg(org: Organization)
-5. changeOrgName(org: Organization, name: string)
-6. changeOrgIndustry(org: Organization, industry: OrganizationIndustry)
-7. changeOrgStatus(org: Organization, status: OrganizationStatus)
-8. removeWorkerById(org: Organization, workerId: number)
-9. addToOrgbyId(org: Organization, workerId: number)
+3. deleteOrgById(organizationId: number)
+4. saveOrg()
+5. changeOrgName(name: string)
+6. changeOrgIndustry(industry: OrganizationIndustry)
+7. changeOrgStatus(status: OrganizationStatus)
+8. deleteWorkerFromOrgById(workerId: number)
+9. addWorkerToOrgById(workerId: number)
 10. getOrgCreator()
 11. isActive()
 12. isInactive()
@@ -251,10 +264,10 @@ TODO: Every organization should have a configuration that enables leader to chan
 
 - #HCMPendingJoinRequestService(Entity = unknown)
 
-1. sendRequest(entity: Entity, recepientId: number)
-2. cancelRequest(entity: Entity, recepientId: number)
-3. getPendingRequests(entity: Entity)
-4. acceptPendingRequest(entity: Entity, requestId: number)
-5. declinePendingRequest(entity: Entity, requestId: number)
+1. async sendRequest(recepientId: number)
+2. async cancelRequest(recepientId: number)
+3. async getPendingRequests()
+4. async acceptPendingRequest(requestId: number)
+5. async declinePendingRequest(requestId: number)
 
 7. Client

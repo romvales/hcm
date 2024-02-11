@@ -57,8 +57,8 @@ export type Attendance = {
   createdById: number
   updatedById?: number
 
-  createdAt: number
-  lastUpdatedAt?: number
+  createdAt: string
+  lastUpdatedAt?: string
 
   createdBy?: Worker
   updatedBy?: Worker
@@ -151,8 +151,8 @@ export type StandardShift = {
   createdById: number
   updatedById: number
 
-  createdAt: number
-  lastUpdatedAt?: number
+  createdAt: string
+  lastUpdatedAt?: string
 
   createdBy: Worker
   updatedBy?: Worker
@@ -175,10 +175,10 @@ export type OverrideShift = {
   organizationId?: number
   workerId: number
 
-  createdAt: number
-  lastUpdatedAt?: number
-  verifiedAt?: number
-  completedAt?: number
+  createdAt: string
+  lastUpdatedAt?: string
+  verifiedAt?: string
+  completedAt?: string
   
   startsOn?: number
   endsOn?: number

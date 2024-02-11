@@ -4,13 +4,24 @@
   "type": "module",
   "scripts": {
     "supabase": "supabase",
+    "supabase:db-reset": "supabase db reset", 
+    "supabase:types": "supabase gen types typescript --local > src/database.d.ts",
     "test": "bun test"
   },
+
+  "files": [
+    "dist"
+  ],
+
+  "main": "dist/index.js",
+
   "devDependencies": {
     "@ngneat/falso": "^7.1.1",
     "@supabase/supabase-js": "^2.39.3",
     "bun-types": "latest",
-    "supabase": "^1.136.3"
+    "esbuild": "^0.20.0",
+    "supabase": "^1.136.3",
+    "tslib": "^2.6.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

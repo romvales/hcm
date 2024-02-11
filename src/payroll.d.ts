@@ -24,8 +24,8 @@ export type Payroll = {
   verifiedById?: number
   organizationId: number
 
-  createdAt: number
-  lastUpdatedAt?: number
+  createdAt: string
+  lastUpdatedAt?: string
 
   createdBy: Worker
   updatedBy?: Worker
@@ -35,8 +35,8 @@ export type Payroll = {
   status?: PayrollStatus
   organization: Organization
 
-  periodStart: number
-  periodEnd: number
+  periodStart: string
+  periodEnd: string
 
   compensations?: Compensation[]
 

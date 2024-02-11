@@ -9,19 +9,53 @@ import type {
 import type { 
   StandardShift,
 } from './time'
+import { TargetUndefinedError, isTargetNotDefined } from './implementations/supabase'
 
-export abstract class HCMRoleService implements BaseOrganizationEntityStatusChecker<Role> {
+export abstract class HCMRoleService implements BaseOrganizationEntityStatusChecker {
   createRole(name: string): Role
+  
+  setTarget(role: Role) {
+    this.role = role
+    return this
+  }
 
-  async getRoleById(id: number): Promise<Role>
-  async deleteRoleById<T>(id: number): Promise<T>
-  async saveRole<T>(role: Role): Promise<T>
+  async getRoleById(id: number)
+  async deleteRoleById(id: number)
+  async saveRole()
 
-  changeRoleName<T>(team: Team): T
-  changeRoleStatus<T>(role: Role, status: RoleStatus): T
+  changeRoleName(newName: string) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Role
+    target.name = newName
+
+    return this
+  }
+
+  changeRoleStatus(status: RoleStatus) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Role
+    target.status = status
+
+    return this
+  }
+
+  private isRoleStatusCheckAgainst(status: RoleStatus) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Role
+
+    return target.status == status
+  }
+
+  isActive = () => this.isRoleStatusCheckAgainst(RoleStatus.ACTIVE)
+  isInactive = () => this.isRoleStatusCheckAgainst(RoleStatus.INACTIVE)
+  isOnReview = () => this.isRoleStatusCheckAgainst(RoleStatus.REVIEW)
+  isTerminated = () => this.isRoleStatusCheckAgainst(RoleStatus.TERMINATED)
 }
 
-export abstract class HCMTeamService implements BaseOrganizationEntityStatusChecker<role> {
+export abstract class HCMTeamService {
   createTeam(name: string): Team
 
   async getTeamById(id: number): Promise<Team>
@@ -37,85 +71,189 @@ export abstract class HCMTeamService implements BaseOrganizationEntityStatusChec
   async removeWorkerFromTeam<T>(team: Team, worker: Worker): Promise<T>
 }
 
-export abstract class HCMWorkerService implements HCMPendingJoinRequestService<Worker> {
+export abstract class HCMWorkerService {
+  createWorker(email: string, username: string): Worker
+
+  setTarget(worker: Worker): this {
+    this.target = worker
+    return this
+  }
+
+  async getWorkerById(id?: number)  
+  async deleteWorkerById(id: number)
+
+  getAddresses(): WorkerAddress[]
+  async getIdentityCards(): Promise<WorkerIdentityCard[]>
+  async deleteIdentityCardById(id: number)
+
+  //
+  changeName(name: {
+    firstName?: string,
+    lastName?: string,
+    middleName?: string,
+    suffix?: string,
+  }): this
+
+  changePictureUrl(pictureUrl: string): this {
+    isTargetNotDefined(this.target)
+    
+    const target = this.target as Worker
+    target.pictureUrl = pictureUrl
+
+    return this
+  }
+
+  changeBirthdate(birthdate: number): this {
+    isTargetNotDefined(this.target)
+    const target = this.target as Worker
+    target.birthdate = birthdate
+
+    return this
+  }
+
+  changeEmailAddress(newEmail: string): this {
+    isTargetNotDefined(this.target)
+    const target = this.target as Worker
+    target.email = newEmail
+    return this
+  }
+
+  changeMobileNumber(newMobile: string): this {
+    isTargetNotDefined(this.target)
+    
+    const target = this.target as Worker
+    target.mobile = newMobile
+
+    return this
+  }
+
+  changeUsername(newUsername: string): this {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Worker
+    target.username = newUsername
+
+    return this
+  }
+
+  changeGender(gender: WorkerGender): this {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Worker
+    target.gender = gender
+
+    return this
+  }
+
+  changeName(name: { 
+    firstName?: string, 
+    lastName?: string,
+    middleName?: string,
+    suffix?: string 
+  }): this {
+    isTargetNotDefined(this.target)
+    
+    const target = this.target as Worker
+    const { firstName, lastName, middleName, suffix } = name
+    
+    if (firstName) target.firstName = firstName
+    if (lastName) target.lastName = lastName
+    if (middleName) target.middleName = middleName
+    if (suffix) target.suffix = suffix
+
+    return this
+  }
+
+  changeWorkerIndicator(indicator: WorkerIndicator): this {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Worker
+    target.indicator = indicator
+
+    return this
+  }
   
-  createWorker(params: {
-    pictureUrl: string,
-    createdById: number,
-    firstName: string, 
-    middleName?: string, 
-    lastName: string,
-    email: string,
-    username: string,
-    gender: WorkerGender,
-    mobileNumber?: string,
-    birthdate?: number,
-  }): Worker
+  async saveWorker()
+  async saveWorkerIdentityCard(id: WorkerIdentityCard)
 
-  async getWorkerById(id: number): Promise<Worker | void>
-  async deleteWorkerById<T>(id: number): Promise<T>
-  
-  async saveWorker(updator: Worker | null, worker: Worker): Promise<PostgrestSingleResponse<null> | undefined>
-  async saveWorker<T>(updator: Worker | null, worker: Worker): Promise<T>
-
-  changeWorkerStatus<T>(worker: Worker, status: WorkerStatus): T
-  changeWorkerType<T>(worker: Worker, type: WorkerType): T
-  changeWorkerRole<T>(worker: Worker, newRole: Role): T
-  changeWorkerTeam<T>(worker: Worker, newTeam: Team): T
-  changeWorkerPayCycle<T>(worker: Worker, newPayCycle: WorkerPayCycle): T
-
-  async suspend<T>(worker: Worker, orgId: number): Promise<T>
-  async terminate<T>(worker: Worker, orgId: number): Promise<T>
-  async resign<T>(worker: Worker, orgId: number): Promise<T>
-
-  addWorkerAddress<T>(worker: Worker, address: WorkerAddress): T
-  addWorkerAddress(worker: Worker, address: WorkerAddress): this
-
-  addIdentityCards<T>(worker: Worker, identityCards: WorkerIdentityCard[]): T
-  addIdentityCards(worker: Worker, identityCards: WorkerIdentityCard[]): this
+  addWorkerAddress(address: WorkerAddress): this
+  addIdentityCards(identityCards: WorkerIdentityCard[]): this
 }
 
 export abstract class HCMWorkerOrganizationService {
 
-  async getOrganizations(worker: Worker): Promise<Organization[] | undefined>
-  async getRoles(worker: Worker): Promise<Role[] | undefined>
-  async getTeams(worker: Worker): Promise<Team[] | undefined>
+  setTarget(worker: Worker): this {
+    this.target = worker
+    return this
+  }
 
-  getWorkerType(worker: Worker): WorkerType
-  getWorkerStatus(worker: Worker): WorkerStatus
-  getAddresses(worker: Worker): WorkerAddress[]
-  getIdentityCards(worker: Worker): WorkerIdentityCard[]
+  async suspend(org: Organization)
+  async terminate(org: Organization)
+  async resign(org: Organization)
 
-  hasOverridenStandardRoleShift(worker: Worker): boolean
-  isWorkerHired(worker: Worker): boolean
-  isWorkerOnLeave(worker: Worker): boolean
-  isWorkerRemote(worker: Worker): boolean
-  isWorkerOnline(worker: Worker): boolean
-  isWorkerRemotelyOnline(worker: Worker): boolean
-  isWorkerOffline(worker: Worker): boolean
-  isWorkerAway(worker: Worker): boolean
-  isWorkerSuspended(worker: Worker): boolean
-  isWorkerOnCall(worker: Worker): boolean
+  async getOrganizations(): Promise<Organization[] | undefined>
+  async getRoles(): Promise<Role[] | undefined>
+  async getTeams(): Promise<Team[] | undefined>
+
+  changeWorkerStatus(status: WorkerStatus) {
+
+    return this
+  }
+
+  changeWorkerType(type: WorkerType) {
+
+    return this
+  }
+
+  changeWorkerRole(newRole: Role) {
+
+    return this
+  }
+
+  changeWorkerTeam(newTeam: Team) {
+
+    return this
+  }
+
+  changeWorkerPayCycle(newPayCycle: WorkerPayCycle) {
+
+    return this
+  }
+
+  getWorkerType(): WorkerType
+  getWorkerStatus(): WorkerStatus
+
+  hasOverridenStandardRoleShift(): boolean
+  isWorkerHired(): boolean
+  isWorkerOnLeave(): boolean
+  isWorkerRemote(): boolean
+  isWorkerOnline(): boolean
+  isWorkerRemotelyOnline(): boolean
+  isWorkerOffline(): boolean
+  isWorkerAway(): boolean
+  isWorkerSuspended(): boolean
+  isWorkerOnCall(): boolean
+
 }
 
-export interface BaseOrganizationEntityStatusChecker<Entity = unknown> {
-  isActive(entity: Entity): boolean
-  isInactive(entity: Entity): boolean
-  isOnReview(entity: Entity): boolean
-  isTerminated(entity: Entity): boolean
+export interface BaseOrganizationEntityStatusChecker {
+  isActive(): boolean
+  isInactive(): boolean
+  isOnReview(): boolean
+  isTerminated(): boolean
 }
 
 // 
 export type Role = {
-  id: number
-  createdById: number
+  id?: number
+  createdById?: number
   updatedById?: number
   organizationId?: number
 
-  createdAt: number
-  lastUpdatedAt?: number
+  createdAt?: string
+  lastUpdatedAt?: string
 
-  createdBy: Worker
+  createdBy?: Worker
   updatedBy?: Worker
 
   organization?: Organization
@@ -134,8 +272,8 @@ export type Team = {
   updatedById?: number
   organizationId?: number
 
-  createdAt: number
-  lastUpdatedAt?: number
+  createdAt: string
+  lastUpdatedAt?: string
 
   createdBy: Worker
   updatedBy?: Worker
@@ -150,12 +288,13 @@ export type Team = {
 // 
 export type Worker = {
   id?: number
+  userId?: string
   createdById?: number
   updatedById?: number
 
   // Indicates whether the worker is online, offline, or away. This is visible to all organizations
   // and workers in the platform.
-  indicator: WorkerIndicator
+  indicator?: WorkerIndicator
 
   // Represents the collection of identity cards uploaded by the worker
   identityCards?: WorkerIdentityCard[]
@@ -163,19 +302,20 @@ export type Worker = {
   createdBy?: Worker
   updatedBy?: Worker
 
-  createdAt?: number
-  lastUpdatedAt?: number
+  createdAt?: string
+  lastUpdatedAt?: string
 
   pictureUrl?: string
 
-  firstName: string
+  firstName?: string
   middleName?: string
-  lastName: string
+  lastName?: string
   nickname?: string
+  suffix?: string
 
-  gender: WorkerGender
+  gender?: WorkerGender
 
-  birthdate?: number
+  birthdate?: string
 
   username?: string
   email: string
@@ -187,29 +327,31 @@ export type Worker = {
 // Indicates what information a worker has within an organization.
 export type WorkerOrganizationInfo = {
   id: number
-  organizationId: number
   workerId: number
+  organizationId: number
   hiredById?: number
-  scheduledSuspensionAt?: number
 
   //
-  status?: WorkerStatus
-  type?: WorkerType
+  status?: WorkerOrganizationStatus
+  type?: WorkerOrganizationType
+
+  //
+  scheduledSuspensionAt?: string
 
   // When was the employee hired in the organization?
-  hiredAt?: number
+  hiredAt?: string
   
   // A timestamp that represents when was the worker suspended
-  suspendedAt?: number
+  suspendedAt?: string
 
   // Indicates when was the last time the worker leave in the work.
-  leaveAt?: number
+  leaveAt?: string
 
   // Termination date
-  terminatedAt?: number
+  terminatedAt?: string
 
   // When did the worker returned after leaving the work?
-  returnedAt?: number
+  returnedAt?: string
 
   // Which team does this worker belongs? Does it belong to a team?
   team?: Team
@@ -247,25 +389,25 @@ export type WorkerOrganizationInfo = {
   organization?: Organization
 
   // Used to indicate what pay cycle is a worker in the payroll
-  payCycle?: WorkerPayCycle
+  payCycle?: WorkerOrganizationPayCycle
 }
 
 //
 export type WorkerIdentityCard = {
-  id: number
-  workerId: number
-  createdById: number
-  updatedById: number
+  id?: number
+  workerId?: number
+  createdById?: number
+  updatedById?: number
 
-  worker: Worker
-  createdBy: Worker
+  worker?: Worker
+  createdBy?: Worker
   updatedBy?: Worker
   
-  createdAt: number
-  lastUpdatedAt?: number
+  createdAt?: string
+  lastUpdatedAt?: string
 
-  frontImageUrl: string
-  backImageUrl: string
+  frontImageUrl?: string
+  backImageUrl?: string
 
   name: string
   extractedInfo?: unknown

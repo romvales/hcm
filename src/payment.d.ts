@@ -23,8 +23,8 @@ export abstract class HCMCompensationService {
 
   createCompensation(params: {
     worker: Worker
-    periodStart: number
-    periodEnd: number
+    periodStart: string
+    periodEnd: string
   }): Compensation
 
   async getCompensationById(compensationId: number): Promise<Compensation>
@@ -77,8 +77,8 @@ export type WorkerPayInfo = {
   updatedById: number
   workerId: number
 
-  createdAt: number
-  lastUpdatedAt?: number
+  createdAt: string
+  lastUpdatedAt?: string
 
   createdBy: Worker
   updatedBy?: Worker
@@ -106,10 +106,10 @@ export type WorkerPayInfoOverride = {
   createdById: number
   updatedById?: number
 
-  createdAt: number
-  lastUpdatedAt?: number
-  startsOn?: number
-  endsOn?: number
+  createdAt: string
+  lastUpdatedAt?: string
+  startsOn?: string
+  endsOn?: string
   
   pay: WorkerPayInfo
   type: WorkerPayInfoType
@@ -144,11 +144,11 @@ export type Compensation = {
   organizationId: number
   workerId: number
 
-  createdAt: number
-  lastUpdatedAt?: number
-  paidAt?: number
-  approvedAt?: number
-  rejectedAt?: number
+  createdAt: string
+  lastUpdatedAt?: string
+  paidAt?: string
+  approvedAt?: string
+  rejectedAt?: string
 
   createdBy: Worker
   updatedBy?: Worker
@@ -162,8 +162,8 @@ export type Compensation = {
   deductions?: Deduction[]
 
   // 
-  periodStart: number
-  periodEnd: number
+  periodStart: string
+  periodEnd: string
 
   // A value which holds the gross pay of the worker
   gvalue: number
@@ -186,8 +186,8 @@ export type Addition = {
   organizationId: number
   workerId?: number
 
-  createdAt: number
-  lastUpdatedAt?: number
+  createdAt: string
+  lastUpdatedAt?: string
 
   createdBy: Worker
   updatedBy?: Worker
@@ -248,13 +248,13 @@ export type Deduction = {
   organizationId: number
   workerId?: number
 
-  createdAt: number
-  lastUpdatedAt?: number
+  createdAt: string
+  lastUpdatedAt?: string
 
   createdBy: Worker
   updatedBy?: Worker
 
-  effectiveAt?: number
+  effectiveAt?: string
 
   type?: DeductionType
   scope?: DeductionScope

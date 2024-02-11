@@ -1,50 +1,97 @@
 // @tags-mvp
 
+import { isTargetNotDefined } from './implementations/supabase'
 import type { 
   Worker,
 } from './worker'
 
 //
-export abstract class HCMOrganizationService implements HCMPendingJoinRequestService<Organization> {
-  createOrg(
-    name: string,
-    industry: OrganizationIndustry,
-    overrideIndustry?: string
-  ): Organization
+export abstract class HCMOrganizationService {
+  createOrg(name: string): Organization
 
-  async getOrgById(organizationId: number): Promise<Organization>
-  async removeOrgById<T>(organizationId: number): Promise<T>
-  async saveOrg<T>(org: Organization): Promise<T>
+  setTarget(org: Organization) {
+    this.target = org
+    return this
+  }
 
-  changeOrgName<T>(org: Organization, name: string): T
-  changeOrgIndustry<T>(org: Organization, industry: OrganizationIndustry, overrideIndustry?: string): T
-  changeOrgStatus<T>(org: Organization, status: OrganizationStatus): T
+  async getOrgCreator(): Promise<Worker | undefined>
+  async getOrgById(organizationId: number): Promise<Organization | undefined>
+  async deleteOrgById(organizationId: number)
+  async saveOrg()
 
-  async removeWorkerById<T>(workerId: number): Promise<T>
-  async addToOrgById<T>(org: Organization, workerId: number): Promise<T>
+  changeOrgName(name: string) {
+    isTargetNotDefined(this.target)
 
-  async getOrgCreator(org: Organization): Promise<Worker>
+    const target = this.target as Organization
+    target.name = name
+
+    return this
+  }
+
+  changeOrgIndustry(industry: OrganizationIndustry, overrideIndustry?: string) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Organization
+    if ((target.industry = industry) == OrganizationIndustry.OTHER) {
+      target.overrideIndustry = overrideIndustry
+    }
+
+    return this
+  }
+
+  changeOrgStatus(status: OrganizationStatus) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Organization
+    target.status = status
+
+    return this
+  }
+
+  async removeWorkerFromOrgById(workerId: number)
+  async addWorkerToOrgById(workerId: number)
+
+  private isOrganizationStatusCheckAgainst(status: OrganizationStatus) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Organization
+    
+    return target.status == status
+  }
+
+  isActive = 
+    () => this.isOrganizationStatusCheckAgainst(OrganizationStatus.ACTIVE)
+  isInactive =
+    () => this.isOrganizationStatusCheckAgainst(OrganizationStatus.INACTIVE)
+  isSuspended =
+    () => this.isOrganizationStatusCheckAgainst(OrganizationStatus.SUSPENDED)
+  isDissolved =
+    () => this.isOrganizationStatusCheckAgainst(OrganizationStatus.DISSOLVED)
+
 }
 
 //
 export interface HCMPendingJoinRequestService<Entity = unknown> {
-  async sendRequest<T>(entity: Entity, recepientId: number): Promise<T>
-  async cancelRequest<T>(entity: Entity, recepientId: number): Promise<T>
+  async sendRequest(recepientId: number)
+  async cancelRequest(recepientId: number)
 
-  async getPendingRequests(entity: Entity): Promise<PendingJoinRequest[]>
-  async acceptPendingRequest<T>(entity: Entity, requestId: number): Promise<T>
-  async declinePendingRequest<T>(entity: Entity, requestId: number): Promise<T>
+  async getPendingRequests(): Promise<PendingJoinRequest[]>
+  async acceptPendingRequest(requestId: number)
+  async declinePendingRequest(requestId: number)
 }
 
 //
 export type Organization = {
-  id: number
+  id?: number
 
-  createdBy: Worker
+  createdById?: number
+  updatedById?: number
+
+  createdBy?: Worker
   updatedBy?: Worker
 
-  createdAt?: number
-  lastUpdatedAt?: number
+  createdAt?: string
+  lastUpdatedAt?: string
 
   status?: OrganizationStatus
 
@@ -64,8 +111,8 @@ export type PendingJoinRequest = {
   workerId: number
   organizationId: number
 
-  createdAt: number
-  expiredAt: number
+  createdAt: string
+  expiredAt: string
 
   status?: PendingJoinRequestStatus
   type?: PendingJoinRequestInvitationType

@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.workers (
   -- Simplify addresses to JSON
   "addresses" json not null default '[]'::json
 );
-ALTER TABLE public.workers ENABLE ROW LEVEL SECURITY;
+
 
 DROP TABLE IF EXISTS public."workerIdentityCards";
 CREATE TABLE IF NOT EXISTS public."workerIdentityCards" (
@@ -50,7 +50,6 @@ CREATE TABLE IF NOT EXISTS public."workerIdentityCards" (
   -- TODO: Extract information from the `frontImageUrl` and `backImageUrl` using AI
   "extractedInfo" json null default '{}'::json
 );
-ALTER TABLE public."workerIdentityCards" ENABLE ROW LEVEL SECURITY;
 
 -- @collection
 DROP TABLE IF EXISTS public."workersIdentityCards";
@@ -59,7 +58,6 @@ CREATE TABLE IF NOT EXISTS public."workersIdentityCards" (
   "ownerId" bigint not null references public.workers(id) on delete cascade,
   "cardId" bigint not null references public."workerIdentityCards"(id) on delete cascade
 );
-ALTER TABLE public."workersIdentityCards" ENABLE ROW LEVEL SECURITY;
 
 
 DROP TABLE IF EXISTS public.organizations;
@@ -78,7 +76,6 @@ CREATE TABLE IF NOT EXISTS public.organizations (
 
   "name" text not null
 );
-ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
 
 -- @collection
 DROP TABLE IF EXISTS public."organizationsMembers";
@@ -111,7 +108,6 @@ CREATE TABLE IF NOT EXISTS public."organizationsMembers" (
   "isTerminated" boolean not null default false,
   "isSuspended" boolean not null default false
 );
-ALTER TABLE public."organizationsMembers" ENABLE ROW LEVEL SECURITY;
 
 -- @collection
 DROP TABLE IF EXISTS public."workerOrganizations";
@@ -120,7 +116,6 @@ CREATE TABLE IF NOT EXISTS public."workerOrganizations" (
   "workerId" bigint not null references public.organizations(id) on delete cascade,
   "organizationId" bigint not null references public.organizations(id) on delete cascade
 );
-ALTER TABLE public."workerOrganizations" ENABLE ROW LEVEL SECURITY;
 
 DROP TABLE IF EXISTS public."pendingJoinRequests";  
 CREATE TABLE IF NOT EXISTS public."pendingJoinRequests" (
@@ -134,7 +129,6 @@ CREATE TABLE IF NOT EXISTS public."pendingJoinRequests" (
   "createdAt" timestamp not null default now(),
   "expiredAt" timestamp not null
 );
-ALTER TABLE public."pendingJoinRequests" ENABLE ROW LEVEL SECURITY;
 
 -- @collection
 DROP TABLE IF EXISTS public."organizationsPendingRequests";
@@ -143,7 +137,6 @@ CREATE TABLE IF NOT EXISTS public."organizationsPendingRequests" (
   "organizationId" bigint not null references public.organizations(id) on delete cascade,
   "requestId" bigint not null references public."pendingJoinRequests"(id) on delete cascade
 );
-ALTER TABLE public."organizationsPendingRequests" ENABLE ROW LEVEL SECURITY;
 
 -- @collection
 DROP TABLE IF EXISTS public."workerPendingRequests";
@@ -152,7 +145,6 @@ CREATE TABLE IF NOT EXISTS public."workerPendingRequests" (
   "workerId" bigint not null references public.workers(id) on delete cascade,
   "requestId" bigint not null references public."pendingJoinRequests"(id) on delete cascade
 );
-ALTER TABLE public."workerPendingRequests" ENABLE ROW LEVEL SECURITY;
 
 DROP TABLE IF EXISTS public."standardShifts";
 CREATE TABLE IF NOT EXISTS public."standardShifts" (
@@ -170,7 +162,6 @@ CREATE TABLE IF NOT EXISTS public."standardShifts" (
   "clockIn" time not null,
   "clockOut" time not null
 );
-ALTER TABLE public."standardShifts" ENABLE ROW LEVEL SECURITY;
 
 -- Scheduled override shifts
 DROP TABLE IF EXISTS public."overrideShifts";
@@ -197,7 +188,6 @@ CREATE TABLE IF NOT EXISTS public."overrideShifts" (
   "overrideClockIn" time not null,
   "overrideClockOut" time not null
 );
-ALTER TABLE public."overrideShifts" ENABLE ROW LEVEL SECURITY;
 
 DROP TABLE IF EXISTS public.attendances;
 CREATE TABLE IF NOT EXISTS public.attendances (
@@ -233,7 +223,6 @@ CREATE TABLE IF NOT EXISTS public.attendances (
   "lateTime" numeric not null default 0,
   "breakTime" numeric not null default 0
 );
-ALTER TABLE public.attendances ENABLE ROW LEVEL SECURITY;
 
 DROP TABLE IF EXISTS public.roles;
 CREATE TABLE IF NOT EXISTS public.roles (
@@ -249,7 +238,6 @@ CREATE TABLE IF NOT EXISTS public.roles (
 
   "name" text not null unique
 );
-ALTER TABLE public.roles ENABLE ROW LEVEL SECURITY;
 
 -- @collection
 DROP TABLE IF EXISTS public."workerRoles";
@@ -258,7 +246,6 @@ CREATE TABLE IF NOT EXISTS public."workerRoles" (
   "roleId" bigint not null references public.roles(id) on delete cascade,
   "workerId" bigint not null references public.roles(id) on delete cascade
 );
-ALTER TABLE public."workerRoles" ENABLE ROW LEVEL SECURITY;
 
 -- @collection
 DROP TABLE IF EXISTS public."rolesStandardShifts";
@@ -267,7 +254,6 @@ CREATE TABLE IF NOT EXISTS public."rolesStandardShifts" (
   "roleId" bigint not null references public.roles(id) on delete cascade,
   "standardShiftId" bigint not null references public."standardShifts"(id) on delete cascade
 );
-ALTER TABLE public."rolesStandardShifts" ENABLE ROW LEVEL SECURITY;
 
 DROP TABLE IF EXISTS public.teams;
 CREATE TABLE IF NOT EXISTS public.teams (
@@ -283,7 +269,6 @@ CREATE TABLE IF NOT EXISTS public.teams (
 
   "name" text not null
 );
-ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
 
 -- @collection
 DROP TABLE IF EXISTS public."teamsMembers";
@@ -292,7 +277,6 @@ CREATE TABLE IF NOT EXISTS public."teamsMembers" (
   "teamId" bigint not null references public.teams(id) on delete cascade,
   "workerId" bigint not null references public.workers(id) on delete cascade
 );
-ALTER TABLE public."teamsMembers" ENABLE ROW LEVEL SECURITY;
 
 DROP TABLE IF EXISTS public.compensations;
 CREATE TABLE IF NOT EXISTS public.compensations (
@@ -318,8 +302,6 @@ CREATE TABLE IF NOT EXISTS public.compensations (
   "dvalue" numeric not null default 0,
   "value" numeric not null default 0
 );
-ALTER TABLE public.compensations ENABLE ROW LEVEL SECURITY;
-
 
 DROP TABLE IF EXISTS public.additions;
 CREATE TABLE IF NOT EXISTS public.additions (
@@ -341,7 +323,6 @@ CREATE TABLE IF NOT EXISTS public.additions (
   "name" text null,
   "value" numeric not null default 0
 );
-ALTER TABLE public.additions ENABLE ROW LEVEL SECURITY;
 
 DROP TABLE IF EXISTS public.deductions;
 CREATE TABLE IF NOT EXISTS public.deductions (
@@ -364,7 +345,6 @@ CREATE TABLE IF NOT EXISTS public.deductions (
   "name" text null,
   "value" numeric not null default 0
 );
-ALTER TABLE public.deductions ENABLE ROW LEVEL SECURITY;
 
 -- @collection
 DROP TABLE IF EXISTS public."compensationsAdditions";
@@ -373,7 +353,6 @@ CREATE TABLE IF NOT EXISTS public."compensationsAdditions" (
   "compensationId" bigint not null references public.compensations(id) on delete cascade,
   "additionId" bigint not null references public.additions(id) on delete cascade
 );
-ALTER TABLE public."compensationsAdditions" ENABLE ROW LEVEL SECURITY;
 
 -- @collection
 DROP TABLE IF EXISTS public."compensationsDeductions";
@@ -382,7 +361,6 @@ CREATE TABLE IF NOT EXISTS public."compensationsDeductions" (
   "compensationId" bigint not null references public.compensations(id) on delete cascade,
   "deductionId" bigint not null references public.deductions(id) on delete cascade
 );
-ALTER TABLE public."compensationsDeductions" ENABLE ROW LEVEL SECURITY;
 
 DROP TABLE IF EXISTS public.payrolls;
 CREATE TABLE IF NOT EXISTS public.payrolls (
@@ -400,7 +378,6 @@ CREATE TABLE IF NOT EXISTS public.payrolls (
 
   "total" numeric not null default 0
 );
-ALTER TABLE public.payrolls ENABLE ROW LEVEL SECURITY;
 
 -- @collection
 DROP TABLE IF EXISTS public."payrollComputedCompensations";
@@ -409,4 +386,3 @@ CREATE TABLE IF NOT EXISTS public."payrollComputedCompensations" (
   "payrollId" bigint not null references public.payrolls(id) on delete cascade,
   "compensationId" bigint not null references public.compensations(id) on delete cascade
 );
-ALTER TABLE public."payrollComputedCompensations" ENABLE ROW LEVEL SECURITY;
