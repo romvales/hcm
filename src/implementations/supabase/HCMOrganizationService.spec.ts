@@ -1,11 +1,10 @@
 import { randCompanyName } from '@ngneat/falso'
-import { expect, test } from 'bun:test'
+import { afterEach, expect, test } from 'bun:test'
 import { Supabase_HCMOrganizationService } from './HCMOrganizationService'
 import { User, createClient } from '@supabase/supabase-js'
-import { OrganizationIndustry, OrganizationStatus } from '../../index.d'
+import { Database, OrganizationIndustry, OrganizationStatus } from '../../../src'
 import { Supabase_HCMWorkerService } from './HCMWorkerService'
-import { createRandomWorker } from './HCMWorkerService.spec'
-import { Database } from '../../database'
+import { createRandomWorker, setupFakeWorkerFields } from './HCMWorkerService.spec'
 
 const localClient = createClient<Database>(
   process.env.SUPABASE_URL as string, 
@@ -14,6 +13,12 @@ const localClient = createClient<Database>(
 
 const LOCALCLIENT_TEST_EMAIL = 'test@romvales.com'
 const LOCALCLIENT_TEST_PASSWORD = 'testpassword'
+
+let userId: string
+
+afterEach(async () => {
+  await cleanHCMOrganizationServiceTest(userId)
+})
 
 const setupHCMOrganizationServiceTest = async () => {
   await localClient.auth.signUp({
@@ -30,22 +35,15 @@ const setupHCMOrganizationServiceTest = async () => {
   const oldOrgName = randCompanyName()
   const newOrgName = randCompanyName()
 
+  if (user) userId = user.id
+
   const workerService = new Supabase_HCMWorkerService(localClient)
   const orgService = new Supabase_HCMOrganizationService(localClient, workerService)
 
   const _orgCreator = createRandomWorker()
   let orgCreator = workerService.createWorker(_orgCreator.email, _orgCreator.username)
 
-  orgCreator = await workerService
-    .assignUserToWorker(user)
-    .changeName({
-      firstName: _orgCreator.firstName,
-      lastName: _orgCreator.lastName,
-      middleName: _orgCreator.middleName,
-    })
-    .changeGender(_orgCreator.gender)
-    .changeEmailAddress(_orgCreator.email)
-    .saveWorker()
+  orgCreator = await setupFakeWorkerFields(workerService, orgCreator, user, _orgCreator).saveWorker()
 
   return {
     oldOrgName,
@@ -59,7 +57,7 @@ const setupHCMOrganizationServiceTest = async () => {
 }
 
 const cleanHCMOrganizationServiceTest = async (id: string) => {
-  ``
+  await localClient.auth.signOut()
   if (id) await localClient.auth.admin.deleteUser(id)
 }
 
@@ -67,8 +65,7 @@ test('> HCMOrganizationService.getOrgCreator()', async () => {
   const { 
     orgCreator,
     orgService,
-    oldOrgName,
-    user } = await setupHCMOrganizationServiceTest()
+    oldOrgName } = await setupHCMOrganizationServiceTest()
 
   orgService.createOrg(oldOrgName)
 
@@ -80,14 +77,12 @@ test('> HCMOrganizationService.getOrgCreator()', async () => {
   expect(savedOrgCreator?.email).toBe(orgCreator.email)
 
   await localClient.from('organizations').delete().match({ id: org.id })
-  await cleanHCMOrganizationServiceTest(user.id)
 })
 
 test('> HCMOrganizationService.getOrgById()', async () => {
   const { 
     orgService, 
-    oldOrgName,
-    user } = await setupHCMOrganizationServiceTest()
+    oldOrgName } = await setupHCMOrganizationServiceTest()
 
   const unsavedOrg = orgService.createOrg(oldOrgName)
   const savedOrg = await orgService.setTarget(unsavedOrg)
@@ -100,14 +95,12 @@ test('> HCMOrganizationService.getOrgById()', async () => {
   expect(getSavedOrg).toBeDefined()
 
   await orgService.deleteOrgById(savedOrg.id)
-  await cleanHCMOrganizationServiceTest(user.id)
 })
 
 test('> HCMOrganizationService.deleteOrgById()', async () => {
   const { 
     orgService,
-    oldOrgName,
-    user } = await setupHCMOrganizationServiceTest()
+    oldOrgName } = await setupHCMOrganizationServiceTest()
 
   const unsavedOrg = orgService.createOrg(oldOrgName)
   const org = await orgService.setTarget(unsavedOrg)
@@ -121,12 +114,10 @@ test('> HCMOrganizationService.deleteOrgById()', async () => {
   const delRes = await orgService.deleteOrgById(org.id)
 
   expect(delRes.error).toBeNull()
-  
-  await cleanHCMOrganizationServiceTest(user.id)
 })
 
 test('> HCMOrganizationService.changeOrgName()', async () => {
-  const { orgService, oldOrgName, newOrgName, user } = await setupHCMOrganizationServiceTest()
+  const { orgService, oldOrgName, newOrgName } = await setupHCMOrganizationServiceTest()
   const org = orgService.createOrg(oldOrgName)
 
   expect(org).toBeDefined()
@@ -135,12 +126,10 @@ test('> HCMOrganizationService.changeOrgName()', async () => {
   orgService.changeOrgName(newOrgName) // Change the name of the organization
 
   expect(org.name).toBe(newOrgName)
-
-  await cleanHCMOrganizationServiceTest(user?.id)
 })
 
 test('> HCMOrganizationService.changeOrgIndustry()', async () => {
-  const { orgService, oldOrgName, user } = await setupHCMOrganizationServiceTest()
+  const { orgService, oldOrgName } = await setupHCMOrganizationServiceTest()
   const org = orgService.createOrg(oldOrgName)
 
   expect(org).toBeDefined()
@@ -150,26 +139,21 @@ test('> HCMOrganizationService.changeOrgIndustry()', async () => {
     .changeOrgIndustry(OrganizationIndustry.HOSPITALITY)
 
   expect(org.industry).toBe(OrganizationIndustry.HOSPITALITY)
-
-  await cleanHCMOrganizationServiceTest(user?.id)
 })
 
 test('> HCMOrganizationService.changeOrgStatus()', async () => {
-  const { orgService, oldOrgName, user } = await setupHCMOrganizationServiceTest()
+  const { orgService, oldOrgName } = await setupHCMOrganizationServiceTest()
   const org = orgService.createOrg(oldOrgName)
 
   expect(org).toBeDefined()
   expect(org.name).toBe(oldOrgName)
-
-  await cleanHCMOrganizationServiceTest(user?.id)
 })
 
 test('> HCMOrganizationService.saveOrg()', async () => {
   const { 
     orgService, 
     oldOrgName,
-    orgCreator,
-    user } = await setupHCMOrganizationServiceTest()
+    orgCreator } = await setupHCMOrganizationServiceTest()
 
   const org = orgService.createOrg(oldOrgName)
 
@@ -189,18 +173,14 @@ test('> HCMOrganizationService.saveOrg()', async () => {
   expect(savedOrg_orgCreator?.email).toBe(orgCreator.email)
 
   await orgService.deleteOrgById(savedOrg.id)
-  await cleanHCMOrganizationServiceTest(user?.id)
 })
 
 test('> HCMOrganizationService.removeWorkerFromOrgById()', async () => {
-  const { user } = await setupHCMOrganizationServiceTest()
+  await setupHCMOrganizationServiceTest()
   
-
-  await cleanHCMOrganizationServiceTest(user.id)
 })
 
 test('> HCMOrganizationService.addWorkerToOrgById()', async () => {
-  const { user } = await setupHCMOrganizationServiceTest()
+  await setupHCMOrganizationServiceTest()
 
-  await cleanHCMOrganizationServiceTest(user.id)
 })

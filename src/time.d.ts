@@ -2,7 +2,7 @@
 
 import type {
   Organization,
-} from './index.d'
+} from '.'
 
 import type { 
   Worker,
@@ -10,6 +10,11 @@ import type {
 
 //
 export abstract class HCMAttendanceService {
+
+  setTarget(target: Attendance) {
+    this.target = target
+    return this
+  }
 
   createAttendance(params: {
     worker: Worker,
@@ -23,41 +28,46 @@ export abstract class HCMAttendanceService {
   }): Attendance
 
   async getAttendanceById(attendanceId: number): Promise<Attendance>
-  async removeAttendanceById<T>(attendanceId: number): Promise<T>
-  async saveAttendance<T>(attendance: Attendance): Promise<T>
+  async deleteAttendanceById(attendanceId: number)
+  async saveAttendance()
 
-  changeStatus(attendance: Attendance, status: AttendanceStatus)
-  changeType(attendance: Attendance, type: AttendanceType)
-  changePerfLabel(attendance: Attendance, label: AttendancePerformanceLabel)
-  changeClockInType(attendance: Attendance, type: AttendanceClockInType)
-  changeClockOutType(attendance: Attendance, type: AttendanceClockOutType)
+  changeStatus(status: AttendanceStatus)
+  changeType(type: AttendanceType)
+  changePerfLabel(label: AttendancePerformanceLabel)
+  changeClockInType(type: AttendanceClockInType)
+  changeClockOutType(type: AttendanceClockOutType)
 
   async clockIn<T>(worker: Worker, type: AttendanceClockInType): Promise<T>
   async clockOut<T>(worker: Worker, type: AttendanceClockOutType): Promise<T>
 
-  async getShift(attendance: Attendance): Promise<StandardShift | OverrideShift>
+  async getShift(): Promise<StandardShift | OverrideShift>
 
-  isLate(attendance: Attendance): boolean
-  isOverride(attendance: Attendance): boolean
-  isHoliday(attendance: Attendance): boolean
-  isBreak(attendance: Attendance): boolean
+  isLate(): boolean
+  isOverride(): boolean
+  isHoliday(): boolean
+  isBreak(): boolean
 }
 
 //
 export abstract class HCMWorkerShiftService {
   
+  setTarget(target: unknown) {
+    this.target = target
+    return this
+  }
+
 }
 
 // 
 export type Attendance = {
-  id: number
-  workerId: number
+  id?: number
+  workerId?: number
   shiftId?: number
   oshiftId?: number
-  createdById: number
+  createdById?: number
   updatedById?: number
 
-  createdAt: string
+  createdAt?: string
   lastUpdatedAt?: string
 
   createdBy?: Worker
@@ -85,8 +95,8 @@ export type Attendance = {
   // 
   isOnBreak?: boolean
 
-  worker: Worker
-  shift: StandardShift | OverrideShift
+  worker?: Worker
+  shift?: StandardShift | OverrideShift
 
   clockIn?: number
   clockOut?: number

@@ -1,5 +1,5 @@
 import { SupabaseClientDatabase, Supabase_HCMWorkerService, isClientNotUndefined, isServiceDefined, isTargetNotDefined, isWorkerDefined } from '.'
-import { HCMRoleService, Role } from '../../worker.d'
+import { HCMRoleService, Role } from '../../../src'
 
 export class Supabase_HCMRoleService extends HCMRoleService {
 
@@ -11,6 +11,14 @@ export class Supabase_HCMRoleService extends HCMRoleService {
     super()
   }
 
+  private dependencies() {
+    const target = this.target as Role
+    const client = this.client as SupabaseClientDatabase
+    const workerService = this.workerService as Supabase_HCMWorkerService
+
+    return { target, workerService, client }
+  }
+
   private ensureClientTargetWorkerServiceToBeDefined() {
     isClientNotUndefined(this.client)
     isTargetNotDefined(this.target)
@@ -20,14 +28,6 @@ export class Supabase_HCMRoleService extends HCMRoleService {
   private ensureClientTargetToBeDefined() {
     isClientNotUndefined(this.client)
     isTargetNotDefined(this.target)
-  }
-
-  private dependencies() {
-    const target = this.target as Role
-    const client = this.client as SupabaseClientDatabase
-    const workerService = this.workerService as Supabase_HCMWorkerService
-
-    return { target, workerService, client }
   }
 
   createRole(name: string): Role {
@@ -64,23 +64,14 @@ export class Supabase_HCMRoleService extends HCMRoleService {
       .match({ id })
       .throwOnError()
 
-    return await query
+    return query
   }
 
   async saveRole() {
     this.ensureClientTargetWorkerServiceToBeDefined()
 
     const { client, target, workerService } = this.dependencies()
-    const sessionUser = await client.auth.getUser()
-      .then(res => {
-        if (res.error) {
-          return undefined
-        }
-
-        return res.data.user
-      })
-
-    const updatorWorker = await workerService.getWorkerByUser(sessionUser)
+    const updatorWorker = await workerService.getWorkerBySessionUser()
 
     // New role
     if (!target.createdById && updatorWorker) {

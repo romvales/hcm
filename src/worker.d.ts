@@ -1,23 +1,24 @@
 // @tags-mvp
 
 import { PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js'
-import type {
+import {
   HCMPendingJoinRequestService,
   Organization, PendingJoinRequest
-} from './index.d'
-
-import type { 
+} from '.'
+import type {
   StandardShift,
 } from './time'
 import { TargetUndefinedError, isTargetNotDefined } from './implementations/supabase'
 
-export abstract class HCMRoleService implements BaseOrganizationEntityStatusChecker {
-  createRole(name: string): Role
-  
-  setTarget(role: Role) {
-    this.role = role
+export abstract class HCMRoleService
+  implements BaseOrganizationEntityStatusChecker {
+
+  setTarget(target: Role) {
+    this.target = target
     return this
   }
+
+  createRole(name: string): Role
 
   async getRoleById(id: number)
   async deleteRoleById(id: number)
@@ -56,6 +57,12 @@ export abstract class HCMRoleService implements BaseOrganizationEntityStatusChec
 }
 
 export abstract class HCMTeamService {
+
+  setTarget(target: Team) {
+    this.target = target
+    return this
+  }
+
   createTeam(name: string): Team
 
   async getTeamById(id: number): Promise<Team>
@@ -72,12 +79,13 @@ export abstract class HCMTeamService {
 }
 
 export abstract class HCMWorkerService {
-  createWorker(email: string, username: string): Worker
 
-  setTarget(worker: Worker): this {
-    this.target = worker
+  setTarget(target: Worker) {
+    this.target = target
     return this
   }
+
+  createWorker(email: string, username: string): Worker
 
   async getWorkerById(id?: number)  
   async deleteWorkerById(id: number)
@@ -182,8 +190,8 @@ export abstract class HCMWorkerService {
 
 export abstract class HCMWorkerOrganizationService {
 
-  setTarget(worker: Worker): this {
-    this.target = worker
+  setTarget(target: WorkerOrganizationInfo) {
+    this.target = target
     return this
   }
 

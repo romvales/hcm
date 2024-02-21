@@ -1,18 +1,16 @@
 // @tags-mvp
-
 import { isTargetNotDefined } from './implementations/supabase'
-import type { 
-  Worker,
-} from './worker'
+import { Worker, HCMServiceUtility } from './index'
 
 //
 export abstract class HCMOrganizationService {
-  createOrg(name: string): Organization
 
-  setTarget(org: Organization) {
-    this.target = org
+  setTarget(target: Organization) {
+    this.target = target
     return this
   }
+
+  createOrg(name: string): Organization
 
   async getOrgCreator(): Promise<Worker | undefined>
   async getOrgById(organizationId: number): Promise<Organization | undefined>

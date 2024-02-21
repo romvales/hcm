@@ -1,10 +1,15 @@
 // @tags-mvp
 
-import { Organization } from './index.d'
+import { Organization } from '.'
 import { Worker } from './worker'
 
 //
 export abstract class HCMPayrollService {
+
+  setTarget(target: Payroll) {
+    this.target = target
+    return this
+  }
 
   async createPayroll(params: {
 

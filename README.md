@@ -222,10 +222,20 @@ Below are the types, enums and interfaces that will be outlined:
 
 - HCMAdditionService
 
-1. createAddition(params: AdditionParams)
+1. createAddition(name: string, value: number)
 2. getAdditionById(additionId: number)
 3. deleteAdditionById(additionId: number)
 4. saveAddition(addition: Addition)
+5. changeValue(newValue: number)
+6. changeName(newName: string)
+7. assignAdditionToWorker(worker: Worker)
+8. changeType(type: AdditionType)
+9. changeScope(scope: AdditionScope)
+10. changeStatus(status: AdditionStatus)
+11. setEphemeral(state: boolean)
+12. changeEffectiveDate(date: string)
+13. assignAdditionToWorker(worker: Worker)
+
 
 - HCMDeductionService
 

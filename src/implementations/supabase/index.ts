@@ -1,6 +1,5 @@
 import { SupabaseClient, User } from '@supabase/supabase-js'
-import { Database } from '../../database'
-import { Worker } from '../../worker'
+import { Database, Worker } from '../../../src'
 
 export { Supabase_HCMAdditionService } from './HCMAdditionService'
 export { Supabase_HCMAttendanceService } from './HCMAttendanceService'

@@ -1,4 +1,4 @@
-import { HCMOrganizationService, HCMPendingJoinRequestService, Organization, PendingJoinRequest } from '../../index.d'
+import { HCMOrganizationService, HCMPendingJoinRequestService, Organization, PendingJoinRequest } from '../../../src'
 import { SupabaseClientDatabase, Supabase_HCMWorkerService, isClientNotUndefined, isServiceDefined, isTargetNotDefined } from '.'
 
 
@@ -23,6 +23,10 @@ export class Supabase_HCMOrganizationService extends HCMOrganizationService
     const target = this.target as Organization
 
     return { client, workerService, target }
+  }
+
+  private ensureClientToBeDefined() {
+    isClientNotUndefined(this.client)
   }
 
   private ensureClientAndTargetToBeDefined() {
@@ -81,7 +85,7 @@ export class Supabase_HCMOrganizationService extends HCMOrganizationService
       .then(res => {
         const updatedOrg = (res.data?.at(0) ?? {}) as Organization
 
-        if (!updatedOrg.id) return {}
+        if (!updatedOrg.id) return {} as Organization
 
         this.setTarget(updatedOrg)
 
@@ -90,7 +94,7 @@ export class Supabase_HCMOrganizationService extends HCMOrganizationService
   }
 
   async getOrgById(organizationId: number): Promise<Organization | undefined> {
-    isClientNotUndefined(this.client)
+    this.ensureClientToBeDefined()
     
     const { client } = this.dependencies()
 
@@ -107,7 +111,7 @@ export class Supabase_HCMOrganizationService extends HCMOrganizationService
   }
 
   async deleteOrgById(organizationId: number | undefined) {
-    isClientNotUndefined(this.client)
+    this.ensureClientToBeDefined()
 
     const { client } = this.dependencies()
 
@@ -116,7 +120,7 @@ export class Supabase_HCMOrganizationService extends HCMOrganizationService
       .match({ id: organizationId })
       .throwOnError()
 
-    return await query
+    return query
   }
 
   async removeWorkerFromOrgById(workerId: number) {

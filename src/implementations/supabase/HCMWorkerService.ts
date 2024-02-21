@@ -1,16 +1,16 @@
   import { SupabaseClientDatabase, isClientNotUndefined, isTargetNotDefined } from '.'
-  import { HCMPendingJoinRequestService, Organization } from '../../index.d'
   import { 
+    HCMPendingJoinRequestService, 
     HCMWorkerOrganizationService,
     HCMWorkerService,
+    Organization,
     Role,
     Team,
     Worker, 
     WorkerAddress,
-    WorkerIdentityCard, 
-    WorkerOrganizationInfo } from '../../worker.d'
+    WorkerIdentityCard } from '../../../src'
 
-  import { User, UserResponse } from '@supabase/supabase-js'
+  import { User } from '@supabase/supabase-js'
 
   export class Supabase_HCMWorkerService extends HCMWorkerService {
 
@@ -26,6 +26,10 @@
       const client = this.client as SupabaseClientDatabase
 
       return { client, target }
+    }
+
+    private ensureClientToBeDefined() {
+      isClientNotUndefined(this.client)
     }
 
     private ensureClientAndTargetToBeDefined() {
@@ -44,8 +48,6 @@
 
     // createWorker() -> Creates a new worker record without saving it to the database
     createWorker(email: string, username: string): Worker {
-      isClientNotUndefined(this.client)
-
       const worker = { 
         email, 
         username,
@@ -60,8 +62,27 @@
       return worker
     }
 
+    async getWorkerBySessionUser(): Promise<Worker | undefined> {
+      this.ensureClientToBeDefined()
+
+      const { client } = this.dependencies()
+
+      const sessionUser = await client.auth.getUser()
+        .then(res => {
+          const { data, error } = res
+
+          if (error) {
+            return undefined
+          }
+
+          return data.user
+        })
+
+      return this.getWorkerByUser(sessionUser)
+    }
+
     async getWorkerByUser(user?: User): Promise<Worker | undefined> {
-      isClientNotUndefined(this.client)
+      this.ensureClientToBeDefined()
 
       if (!user) return
 
@@ -82,7 +103,7 @@
     }
 
     async getWorkerById(id?: number): Promise<Worker | undefined> {
-      isClientNotUndefined(this.client)
+      this.ensureClientToBeDefined()
 
       if (!id) return
       
@@ -133,7 +154,7 @@
     }
 
     async deleteWorkerById(id?: number) {
-      isClientNotUndefined(this.client)
+      this.ensureClientToBeDefined()
 
       if (typeof id == 'undefined') {
         return
@@ -145,11 +166,11 @@
         .eq('id', id)
         .throwOnError()
 
-      return await query
+      return query
     }
 
     async deleteIdentityCardById(id: number) {
-      isClientNotUndefined(this.client)
+      this.ensureClientToBeDefined()
 
       const { client } = this.dependencies()
       const query = client.from('workersIdentityCards')
@@ -157,7 +178,7 @@
         .eq('id', id)
         .throwOnError()
 
-      return await query
+      return query
     }
 
     // Saves a worker related data to the postgres db
@@ -166,17 +187,8 @@
 
       const { client, target } = this.dependencies()
 
-      const sessionUser = await client?.auth.getUser()
-        .then(res => {
-          const { data, error } = res
-          if (error) {
-            return undefined
-          }
+      const updatorWorker = await this.getWorkerBySessionUser()
 
-          return data.user
-        })
-
-      const updatorWorker = await this.getWorkerByUser(sessionUser)
 
       // New worker
       if (!target.createdById && updatorWorker) {
@@ -218,7 +230,7 @@
     }
 
     async saveWorkerIdentityCard(id: WorkerIdentityCard) {
-      isClientNotUndefined(this.client)
+      this.ensureClientToBeDefined()
 
       const { client } = this.dependencies()
 
@@ -274,6 +286,10 @@
       const client = this.client as SupabaseClientDatabase
 
       return { client, target }
+    }
+
+    private ensureClientToBeDefined() {
+      isClientNotUndefined(this.client)
     }
 
     private ensureClientAndTargetToBeDefined() {

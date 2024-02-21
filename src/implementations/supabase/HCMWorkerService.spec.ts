@@ -1,6 +1,6 @@
-import { test, expect } from 'bun:test'
+import { test, expect, afterEach } from 'bun:test'
 import { Supabase_HCMWorkerService } from '.'
-import { WorkerAddressType, WorkerGender } from '../../worker.d'
+import { Worker, WorkerAddressType, WorkerGender } from '../../../src'
 
 import {
 
@@ -18,7 +18,7 @@ import {
 } from '@ngneat/falso'
 import { User, createClient } from '@supabase/supabase-js'
 import { Supabase_HCMWorkerOrganizationService } from './HCMWorkerService'
-import { Database } from '../../database'
+import { Database } from '../../../src'
 
 const localClient = createClient<Database>(
   process.env.SUPABASE_URL as string, 
@@ -27,6 +27,12 @@ const localClient = createClient<Database>(
 
 const LOCALCLIENT_TEST_EMAIL = 'test@romvales.com'
 const LOCALCLIENT_TEST_PASSWORD = 'testpassword'
+
+let userId: string
+
+afterEach(async () => {
+  await cleanHCMWorkerServiceTest(userId)
+})
 
 export const createRandomWorker = () => {
   return {
@@ -59,18 +65,54 @@ const setupHCMWorkerServiceTest = async () => {
   })
 
   const user = res.data.user as User
-  const id = user?.id as string
+
+  if (user) userId = user?.id
 
   return {
     workerService,
     _worker,
     worker,
     user,
-    id,
 
     _creatorWorker,
     creatorWorker,
   }
+}
+
+export const setupFakeWorkerFields = (
+  workerService: Supabase_HCMWorkerService, 
+  target: Worker,
+  user?: User | null, 
+  workerFields?: any) => {
+
+  workerService
+    .setTarget(target)
+    .changeGender(workerFields.gender)
+    .changeName({
+      firstName: workerFields.firstName,
+      lastName: workerFields.lastName,
+      middleName: workerFields.middleName,
+    })
+    .changeEmailAddress(workerFields.email)
+    .changeUsername(workerFields.username)
+
+  if (user) {
+    workerService.assignUserToWorker(user)
+  }
+
+  if (user?.email) {
+    workerService.changeEmailAddress(user.email)
+    workerFields.email = user.email
+  }
+
+  return workerService
+}
+
+const expectCommonFieldsToBeDefined = (worker?: Worker, _worker?: any) => {
+  if (!worker) return
+
+  expect(worker.email).toBe(_worker.email)
+  expect(worker.username).toBe(_worker.username)
 }
 
 const cleanHCMWorkerServiceTest = async (userId?: string) => {
@@ -79,18 +121,15 @@ const cleanHCMWorkerServiceTest = async (userId?: string) => {
 }
 
 test ('> HCMWorkerSevice.createWorker()', async () => {
-  const { workerService, _worker, id } = await setupHCMWorkerServiceTest()
+  const { workerService, _worker } = await setupHCMWorkerServiceTest()
   const worker = workerService.createWorker(_worker.email, _worker.username)
 
   expect(worker).not.toBeUndefined()
-  expect(worker.email).toBe(_worker.email)
-  expect(worker.username).toBe(_worker.username)
-
-  await cleanHCMWorkerServiceTest(id)
+  expectCommonFieldsToBeDefined(worker, _worker)
 })
 
 test('> HCMWorkerService.addWorkerAddress()', async () => {
-  const { workerService, worker, id } = await setupHCMWorkerServiceTest()
+  const { workerService, worker } = await setupHCMWorkerServiceTest()
 
   expect(worker.addresses).toHaveLength(0)
 
@@ -107,7 +146,6 @@ test('> HCMWorkerService.addWorkerAddress()', async () => {
     })
 
   expect(worker.addresses).toHaveLength(1)
-  await cleanHCMWorkerServiceTest(id)
 })
 
 test('> HCMWorkerService.getWorkerByUser()', async () => {
@@ -115,105 +153,60 @@ test('> HCMWorkerService.getWorkerByUser()', async () => {
     workerService, 
     worker, 
     user,
-    _worker,
-    id } = await setupHCMWorkerServiceTest()
+    _worker } = await setupHCMWorkerServiceTest()
 
-  await workerService
-    .setTarget(worker)
-    .assignUserToWorker(user)
-    .changeGender(_worker.gender)
-    .changeName({
-      firstName: _worker.firstName,
-      lastName: _worker.lastName,
-      middleName: _worker.middleName,
-    })
-    .changeEmailAddress(_worker.email)
-    .changeUsername(_worker.username)
-    .saveWorker()
+  await setupFakeWorkerFields(workerService, worker, user, _worker).saveWorker()
 
   const getSavedWorker = await workerService.getWorkerByUser(user)
 
   expect(user).toBeDefined()
   expect(getSavedWorker).toBeDefined()
+  expectCommonFieldsToBeDefined(getSavedWorker, _worker)
   expect(getSavedWorker?.firstName).toBe(_worker.firstName)
   expect(getSavedWorker?.lastName).toBe(_worker.lastName)
-  expect(getSavedWorker?.email).toBe(_worker.email)
-  expect(getSavedWorker?.userId).toBe(id)
-
-  await cleanHCMWorkerServiceTest(id)
+  expect(getSavedWorker?.userId).toBe(userId)
 })
 
 test('> HCMWorkerService.getWorkerById()', async () => {
   const {
-    workerService, worker, _worker, id } = await setupHCMWorkerServiceTest()
+    workerService, worker, _worker } = await setupHCMWorkerServiceTest()
 
-  const savedWorker = await workerService
-    .setTarget(worker)
-    .changeName({
-      firstName: _worker.firstName,
-      lastName: _worker.lastName,
-      middleName: _worker.middleName,
-    })
-    .changeGender(_worker.gender)
-    .changeEmailAddress(_worker.email)
-    .changeUsername(_worker.username)
+  const savedWorker = await setupFakeWorkerFields(workerService, worker, undefined, _worker)
     .saveWorker()
 
   const result = await workerService.getWorkerById(savedWorker.id)
 
   expect(result).toBeDefined()
   expect(result?.id).toBe(savedWorker.id as number)
+  expectCommonFieldsToBeDefined(result, savedWorker)
   expect(result?.firstName).toBe(savedWorker.firstName as string)
   expect(result?.lastName).toBe(savedWorker.lastName as string)
-  expect(result?.email).toBe(savedWorker.email as string)
 
   await localClient.from('workers').delete().match({ id: result?.id })
-  await cleanHCMWorkerServiceTest(id)
 })
 
 test('> HCMWorkerService.deleteWorkerById()', async () => {
   const { 
     workerService, 
     worker, 
-    _worker,
-    id } = await setupHCMWorkerServiceTest()
+    _worker } = await setupHCMWorkerServiceTest()
 
-  const savedWorker = await workerService
-    .setTarget(worker)
-    .changeName({
-      firstName: _worker.firstName,
-      lastName: _worker.lastName,
-      middleName: _worker.middleName,
-    })
-    .changeGender(_worker.gender)
-    .changeEmailAddress(_worker.email)
-    .changeUsername(_worker.username)
+  const savedWorker = await setupFakeWorkerFields(workerService, worker, undefined, _worker)
     .saveWorker()
 
   const res = await workerService.deleteWorkerById(savedWorker.id)
 
   expect(await workerService.getWorkerById(savedWorker.id)).toBeUndefined()
   expect(res?.status).toBe(204)
-
-  await cleanHCMWorkerServiceTest(id)
 })
 
 test('> HCMWorkerService.saveWorker()', async () => {
-  const { workerService, worker, _worker, id } = await setupHCMWorkerServiceTest()
+  const { workerService, worker, _worker } = await setupHCMWorkerServiceTest()
 
-  const savedWorker = await workerService
-    .setTarget(worker)
-    .changeGender(_worker.gender)
-    .changeName({
-      firstName: _worker.firstName,
-      lastName: _worker.lastName,
-      middleName: _worker.middleName,
-    })
-    .changeEmailAddress(_worker.email)
-    .changeUsername(_worker.username)
+  const savedWorker = await setupFakeWorkerFields(workerService, worker, undefined, _worker)
     .saveWorker()
 
-  expect(savedWorker.email).toBe(worker.email)
+  expectCommonFieldsToBeDefined(savedWorker, _worker)
   expect(savedWorker.firstName).toBe(_worker.firstName)
   expect(savedWorker.lastName).toBe(_worker.lastName)
   expect(savedWorker.middleName).toBe(_worker.middleName)
@@ -222,7 +215,6 @@ test('> HCMWorkerService.saveWorker()', async () => {
   expect(savedWorker.userId).toBeNull()
   
   await localClient.from('workers').delete().eq('email', _worker.email)
-  await cleanHCMWorkerServiceTest(id)
 })
 
 test('> HCMWorkerService.saveWorker() # with session', async () => {
@@ -230,67 +222,37 @@ test('> HCMWorkerService.saveWorker() # with session', async () => {
     _creatorWorker,
     creatorWorker,
     user,
-    id: creatorId,
     workerService,
     _worker,
     worker } = await setupHCMWorkerServiceTest()
 
-  const creator = await workerService
-    .setTarget(creatorWorker)
-    .assignUserToWorker(user)
-    .changeGender(_creatorWorker.gender)
-    .changeName({
-      firstName: _creatorWorker.firstName,
-      lastName: _creatorWorker.lastName,
-      middleName: _creatorWorker.middleName,
-    })
-
-    // Use the email of the authenticated test user
-    .changeEmailAddress(user?.email as string)
-    .changeUsername(_creatorWorker.username)
+  const creator = await setupFakeWorkerFields(workerService, creatorWorker, user, _creatorWorker)
     .saveWorker()
 
-  const createdWorker = await workerService
-    .setTarget(worker)
-    .changeGender(_worker.gender)
-    .changeName({
-      firstName: _worker.firstName,
-      lastName: _worker.lastName,
-      middleName: _worker.middleName,
-    })
-    .changeEmailAddress(_worker.email)
-    .changeUsername(_worker.username)
+  const createdWorker = await setupFakeWorkerFields(workerService, worker, undefined, _worker)
     .saveWorker()
 
   expect(createdWorker.createdById == creator.id).toBeTrue()
   expect(createdWorker.userId).toBeNull()
-  expect(creator.userId).toBe(creatorId)
-  expect(user?.email).toBe(creator.email)
+  expect(creator.userId).toBe(userId)
+  expect<string | undefined>(creator.email).toBe(user.email)
+  expectCommonFieldsToBeDefined(creator, _creatorWorker)
   expect(creator.firstName).toBe(_creatorWorker.firstName)
   expect(creator.lastName).toBe(_creatorWorker.lastName)
+  expectCommonFieldsToBeDefined(createdWorker, _worker)
   expect(createdWorker.firstName).toBe(_worker.firstName)
   expect(createdWorker.lastName).toBe(_worker.lastName)
-  expect(createdWorker.email).toBe(_worker.email)
 
   await localClient.from('workers').delete().eq('email', createdWorker.email)
-  await cleanHCMWorkerServiceTest(creatorId)
 })
 
 test('> HCMWorkerService.saveWorkerIdentityCard()', async () => {
   const ID_NAME = 'Personal Driver\'s License (1)'
-  const { workerService, _worker, worker, id } = await setupHCMWorkerServiceTest()
+  const { workerService, _worker, worker } = await setupHCMWorkerServiceTest()
 
-  const createdWorker = await workerService
-    .setTarget(worker)
-    .changeGender(_worker.gender)
-    .changeName({
-      firstName: _worker.firstName,
-      lastName: _worker.lastName,
-      middleName: _worker.middleName,
-    })
-    .changeEmailAddress(_worker.email)
-    .changeUsername(_worker.username)
-    .saveWorker()
+  const createdWorker = 
+    await setupFakeWorkerFields(workerService, worker, undefined, _worker)
+      .saveWorker()
 
   const idCard = await workerService.saveWorkerIdentityCard({ 
     workerId: createdWorker.id,
@@ -302,7 +264,6 @@ test('> HCMWorkerService.saveWorkerIdentityCard()', async () => {
 
   await localClient.from('workersIdentityCards').delete().eq('name', ID_NAME)
   await workerService.deleteWorkerById(createdWorker.id)
-  await cleanHCMWorkerServiceTest(id)
 })
 
 test('> HCMWorkerService.getIdentityCards()', async () => {

@@ -1,6 +1,7 @@
 // @tags-mvp
 
-import { Organization } from '.'
+import { isTargetNotDefined } from './implementations/supabase'
+import { Organization } from './index.d'
 import type {
   Worker
 } from './worker'
@@ -8,8 +9,13 @@ import type {
 //
 export abstract class HCMWorkerPayInfoService {
 
-  createWorkerPayInfo(params: {
+  setTarget(target: Worker) {
+    this.target = target
+    return this
+  }
 
+  createWorkerPayInfo(params: {
+    
   }): WorkerPayInfo
 
   async getWorkerPayInfo(worker: Worker): Promise<WorkerPayInfo>
@@ -20,6 +26,11 @@ export abstract class HCMWorkerPayInfoService {
 
 //
 export abstract class HCMCompensationService {
+
+  setTarget(target: Compensation) {
+    this.target = target
+    return this
+  }
 
   createCompensation(params: {
     worker: Worker
@@ -46,26 +57,177 @@ export abstract class HCMCompensationService {
 //
 export abstract class HCMAdditionService {
 
-  createAddition(params: {
+  setTarget(target: Addition) {
+    this.target = target
+    return this
+  }
 
-  })
+  createAddition(name: string, value: number)
 
-  async getAdditionById(additionId: number): Promise<Addition>
-  async removeAdditionById<T>(additionId: number): Promise<T>
-  async saveAddition<T>(additionId: number): Promise<T>
+  async getAdditionById(additionId: number): Promise<Addition | undefined>
+  async deleteAdditionById(additionId: number)
+  async saveAddition(additionId: number)
+
+  changeType(type: AdditionType) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Addition
+    target.type = type
+
+    return this
+  }
+
+  changeScope(scope: AdditionScope) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Addition
+    target.scope = scope
+
+    return this
+  }
+
+  changeStatus(status: AdditionStatus) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Addition
+    target.status = status
+
+    return this
+  }
+
+  setEphemeral(state: boolean) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Addition
+    target.isEphemeral = state
+
+    return this
+  }
+
+  changeName(newName: string) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Addition
+    target.name = newName
+
+    return this
+  }
+
+  changeValue(newValue: number) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Addition
+    target.value = newValue
+
+    return this
+  }
+
+  changeEffectiveDate(newDate: string) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Addition
+    target.effectiveAt = newDate
+
+    return this
+  }
+
+  assignAdditionToWorker(worker: Worker) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Addition
+    target.workerId = worker.id
+
+    return this
+  }
 
 }
 
 //
 export abstract class HCMDeductionService {
 
-  createDeduction(params: {
+  setTarget(target: Deduction) {
+    this.target = target
+    return this
+  }
 
-  })
+  createDeduction(name: string, value: number)
 
-  async getDeductionById(deductionId: number): Promise<Deduction>
-  async removeDeductionById<T>(deductionId: number): Promise<T>
-  async saveDeduction<T>(deductionId: number): Promise<T>
+  async getDeductionById(deductionId: number): Promise<Deduction | undefined>
+  async deleteDeductionById(deductionId: number)
+  async saveDeduction()
+
+  setEphemeral(state: boolean) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Deduction
+    target.isEphemeral = state
+
+    return this
+  }
+
+  changeType(type: DeductionType) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Deduction
+    target.type = type
+
+    return this
+  }
+
+  changeScope(scope: DeductionScope) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Deduction
+    target.scope = scope
+
+    return this
+  }
+
+  changeStatus(status: DeductionStatus) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Deduction
+    target.status = status
+
+    return this
+  }
+
+  changeVoluntary(state: boolean) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Deduction
+    target.isVoluntary = state
+
+    return this
+  }
+
+  changeName(newName: string) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Deduction
+    target.name = newName
+
+    return this
+  }
+
+  changeValue(newValue: number) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Deduction
+    target.value = newValue
+
+    return this
+  }
+
+
+  assignDeductionToWorker(worker: Worker) {
+    isTargetNotDefined(this.target)
+
+    const target = this.target as Deduction
+    target.workerId = worker.id
+
+    return this
+  }
 
 }
 
@@ -180,16 +342,17 @@ export type Compensation = {
 
 // Additions is a value added to the final pay for a worker on any specific pay period.
 export type Addition = {
-  id: number
-  createdById: number
-  updatedById: number
-  organizationId: number
+  id?: number
+  createdById?: number
+  updatedById?: number
+  organizationId?: number
   workerId?: number
 
-  createdAt: string
+  createdAt?: string
   lastUpdatedAt?: string
+  effectiveAt?: string
 
-  createdBy: Worker
+  createdBy?: Worker
   updatedBy?: Worker
 
   type?: AdditionType
@@ -242,16 +405,15 @@ export enum AdditionStatus {
 // of a worker on a specific pay period. Depending on the type of deduction, it can
 // be cancel out and prevent any deduction to the final pay amount.
 export type Deduction = {
-  id: number
-  createdById: number
+  id?: number
+  createdById?: number
   updatedById?: number
-  organizationId: number
   workerId?: number
 
-  createdAt: string
+  createdAt?: string
   lastUpdatedAt?: string
 
-  createdBy: Worker
+  createdBy?: Worker
   updatedBy?: Worker
 
   effectiveAt?: string
