@@ -1,0 +1,27 @@
+include .env
+
+export $(shell sed 's/=.*//' .env)
+export ROOTDIR=$(shell pwd)
+export GODIR=${ROOTDIR}/src/goServer
+
+run:
+	@cd ${GODIR} && \
+		[ -e ./main ] && ./main || go run cmd/main.go
+
+proto-build:
+	@./protogen.sh
+
+build:
+	@cd ${GODIR} && \
+		go build cmd/main.go
+
+dev:
+	@make clean && make run
+
+test:
+	@make clean
+	@cd ${GODIR} && go test -v ./... 
+
+clean:
+	@cd ${GODIR} && [ -e ./main ] && rm ./main || echo &> /dev/null;
+	@cd ${GODIR} && go clean -testcache;

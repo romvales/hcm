@@ -1,0 +1,474 @@
+syntax = "proto3";
+
+package entities;
+
+option go_package = "goServer/internal/core/pb";
+option optimize_for = SPEED;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+service HCMCoreService {
+
+
+}
+
+//
+//
+//
+// Table: workers
+message Worker {
+  enum Flag {
+    UNKNOWN = 0;
+
+    G_MALE = 1;
+    G_FEMALE = 2;
+    G_OTHER = 4;
+  }
+
+  int64 id = 1;
+  optional int64 userId = 2;
+  optional int64 createdById = 3;
+  optional int64 updatedById = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  optional google.protobuf.Timestamp lastUpdatedAt = 6;
+  optional string pictureUrl = 7;
+  string firstName = 8;
+  string lastName = 9;
+  optional string middleName = 10;
+  optional google.protobuf.Timestamp birthdate = 11;
+  string username = 12;
+  string email = 13;
+  optional string mobile = 14;
+  repeated google.protobuf.Struct addresses = 15;
+  uint32 flags = 16;
+}
+
+//
+//
+//
+// Table: workerIdentityCards
+message WorkerIdentityCard {
+  enum Flag {
+    UNKNOWN = 0;
+  }
+
+  int64 id = 1;
+  int64 workerId = 2;
+  optional int64 createdById = 3;
+  optional int64 updatedById = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  optional google.protobuf.Timestamp lastUpdatedAt = 6;
+  string frontImageUrl = 7;
+  string backImageUrl = 8;
+  string name = 9;
+  optional google.protobuf.Struct extractedInfo = 10;
+  uint32 flags = 11;
+}
+
+//
+//
+//
+// Table: workerIdentityCards
+message WorkerIdentityCardRelation {
+  int64 id = 1;
+  int64 ownerId = 2;
+  int64 cardId = 3;
+}
+
+//
+//
+// Table: organizations
+message Organization {
+  enum Flag {
+    UNKNOWN = 0;
+  }
+
+  enum Industry {
+    AGRICULTURE = 0;
+    PRODUCTION = 1;
+    CHEMICAL = 2;
+    COMMERCE = 3;
+    CONSTRUCTION = 4;
+    EDUCATION = 5;
+    FINANCIAL = 6;
+    RETAIL = 7;
+    FORESTRY = 8;
+    HEALTH = 9;
+    HOSPITALITY = 10;
+    MINING = 11;
+    MECHANICAL = 12;
+    PUBLIC_SERVICE = 13;
+    TELECOM = 14;
+    SHIPPING = 15;
+    TEXTILE = 16;
+    TRANSPORT = 17;
+    EQUIPMENT = 18;
+    UTILITIES = 19;
+    OTHER = 20;
+  }
+
+  int64 id = 1;
+  optional int64 createdById = 2;
+  optional int64 updatedById = 3;
+  google.protobuf.Timestamp createdAt = 4;
+  optional google.protobuf.Timestamp lastUpdatedAt = 5;
+  Industry industry = 6;
+  optional string overrideIndustry = 7;
+  string name = 8;
+  uint32 flags = 9;
+}
+
+
+//
+//
+// Table: organizationsMembers
+message Member {
+  enum Flag {
+    UNKNOWN = 0;
+
+    // Toggle each of these bits according to the current state
+    // of the worker in an organization.
+    S_REMOTE = 1;
+    S_HIRED = 2;
+    S_DAYOFF = 4;
+    S_ONCALL = 8;
+    S_ONLEAVE = 16;
+    S_TERMINATED = 32;
+    S_SUSPENDED = 64;
+  }
+
+  int64 id = 1;
+  int64 organizationId = 2;
+  int64 workerId = 3;
+  optional int64 hiredBy = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  optional google.protobuf.Timestamp lastUpdatedAt = 6;
+  optional google.protobuf.Timestamp hiredAt = 7;
+  optional google.protobuf.Timestamp suspendedAt = 8;
+  optional google.protobuf.Timestamp leaveAt = 9;
+  optional google.protobuf.Timestamp terminatedAt = 10;
+  optional google.protobuf.Timestamp returnedAt = 11;
+  optional google.protobuf.Timestamp scheduledSuspensionAt = 12;
+  uint32 flags = 15;
+}
+
+//
+//
+//
+// Table: workerOrganizations
+message WorkerOrganizationRelation {
+  int64 id = 1;
+  int64 workerId = 2;
+  int64 organizationId = 3;
+}
+
+//
+//
+//
+// Table: pendingJoinRequests
+message JoinRequest {
+  enum Flag {
+    UNKNOWN = 0;
+    S_WAIT = 1;
+    S_ACCEPT = 2;
+    S_REJECT = 4;
+    S_EXPIRED = 8;
+  }
+
+  int64 id = 1;
+  int64 workerId = 2;
+  int64 organizationId = 3;
+  google.protobuf.Timestamp createdAt = 4;
+  google.protobuf.Timestamp expiredAt = 5;
+  uint32 flags = 6;
+}
+
+//
+//
+//
+// Table: organizationsPendingRequests
+message OrganizationPendingRequestRelation {
+  int64 id = 1;
+  int64 organizationId = 2;
+  int64 requestId = 3;
+}
+
+//
+//
+//
+// Table: workerPendingRequests
+message WorkerPendingRequestRelation {
+  int64 id = 1;
+  int64 workerId = 2;
+  int64 requestId = 3;
+}
+
+//
+//
+//
+// Table: roles
+message Role {
+  enum Flag {
+    UNKNOWN = 0;
+  }
+  
+  int64 id = 1;
+  optional int64 createdById = 2;
+  optional int64 updatedById = 3;
+  int64 organizationId = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  optional google.protobuf.Timestamp lastUpdatedAt = 6;
+  string name = 7;
+  uint32 flags = 8;
+}
+
+//
+//
+//
+// Table: rolesStandardShifts
+message RoleShiftRelation {
+  int64 id = 1;
+  int64 roleId = 2;
+  int64 standardShiftId = 3;
+}
+
+//
+//
+//
+// Table: workerRoles
+message WorkerRoleRelation {
+  int64 id = 1;
+  int64 roleId = 2;
+  int64 workerId = 3;
+  int64 organizationId = 4;
+}
+
+//
+//
+//
+// Table: teams
+message Team {
+  enum Flag {
+    UNKNOWN = 0;
+  }
+
+  int64 id = 1;
+  optional int64 createdById = 2;
+  optional int64 updatedById = 3;
+  int64 organizationId = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  optional google.protobuf.Timestamp lastUpdatedAt = 6;
+  string name = 7;
+  uint32 flags = 8;
+}
+
+//
+//
+//
+// Table: teamsMembers
+message TeamMemberRelation {
+  int64 id = 1;
+  int64 teamId = 2;
+  int64 workerId = 3;
+}
+
+//
+//
+//
+// Table: compensations
+message Compensation {
+  enum Flag {
+    UNKNOWN = 0;
+  }
+
+  int64 id = 1;
+  optional int64 createdById = 2;
+  optional int64 updatedById = 3;
+  google.protobuf.Timestamp createdAt = 4;
+  optional google.protobuf.Timestamp lastUpdatedAt = 5;
+  optional google.protobuf.Timestamp paidAt = 6;
+  optional google.protobuf.Timestamp approvedAt = 7;
+  optional google.protobuf.Timestamp rejectedAt = 8;
+  google.protobuf.Timestamp periodStart = 9;
+  google.protobuf.Timestamp periodEnd = 10;
+  float gvalue = 11;
+  float avalue = 12;
+  float dvalue = 13;
+  float value = 14;
+  uint32 flags = 15;
+}
+
+//
+//
+//
+// Table: additions
+message Addition {
+  enum Flag {
+    UNKNOWN = 0;
+    T_EPHEMERAL = 1;
+  }
+
+  int64 id = 1;
+  optional int64 createdById = 2;
+  optional int64 updatedByid = 3;
+  optional int64 workerId = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  optional google.protobuf.Timestamp lastUpdatedAt = 6;
+  optional google.protobuf.Timestamp effectiveAt = 7;
+  string name = 8;
+  float value = 9;
+  uint32 flags = 10;
+}
+
+//
+//
+//
+// Table: deductions
+message Deducion {
+  enum Flag {
+    UNKNOWN = 0;
+
+    T_EPHEMERAL = 1;
+    T_VOLUNTARY = 2;
+  }
+
+  int64 id = 1;
+  optional int64 createdById = 2;
+  optional int64 updatedByid = 3;
+  optional int64 workerId = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  optional google.protobuf.Timestamp lastUpdatedAt = 6;
+  optional google.protobuf.Timestamp effectiveAt = 7;
+  string name = 8;
+  float value = 9;
+  uint32 flags = 10;
+}
+
+//
+//
+//
+// Table: compensationsAdditions
+message CompensationAdditionRelation {
+  int64 id = 1;
+  int64 compensationId = 2;
+  int64 additionId = 3;
+}
+
+//
+//
+//
+// Table: compensationDeductions
+message CompensationDeductionRelation {
+  int64 id = 1;
+  int64 compensationId = 2;
+  int64 deductionId = 3;
+}
+
+//
+//
+//
+// Table: payrolls
+message Payroll {
+  enum Flag {
+    UNKNOWN = 0;
+  }
+  
+  int64 id = 1;
+  int64 createdById = 2;
+  int64 updatedById = 3;
+  int64 verifiedById = 4;
+  int64 organizationId = 5;
+  google.protobuf.Timestamp createdAt = 6;
+  google.protobuf.Timestamp lastUpdatedAt = 7;
+  float total = 8;
+  uint32 flags = 9;
+}
+
+//
+//
+//
+// Table: payrollCompensations
+message PayrollCompensationRelation {
+  int64 id = 1;
+  int64 payrollId = 2;
+  int64 compensationId = 3;
+}
+
+//
+//
+//
+// Table: attendances
+message Attendance {
+  enum Flag {
+    UNKNOWN = 0;
+  }
+
+  int64 id = 1;
+  int64 workerId = 2;
+  optional int64 shiftId = 3;
+  optional int64 oshiftId = 4;
+  optional int64 createdById = 5;
+  optional int64 updatedById = 6;
+  google.protobuf.Timestamp createdAt = 7;
+  optional google.protobuf.Timestamp lastUpdatedAt = 8;
+  google.protobuf.Timestamp clockIn = 9;
+  google.protobuf.Timestamp clockOut = 10;
+  int64 computed = 11;
+  int64 underTime = 12;
+  int64 overTime = 13;
+  int64 lateTime = 14;
+  int64 breakTime = 15;
+  uint32 flags = 16;
+}
+
+enum ShiftDay {
+  MON = 0; TUE = 1; WED = 2; THU = 3; FRI = 4; SAT = 5; SUN = 6;
+}
+
+//
+//
+//
+//
+// Table: standardShifts
+message Shift {
+  int64 id = 1;
+  optional int64 createdById = 2;
+  optional int64 updatedById = 3;
+  int64 organizationId = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  optional google.protobuf.Timestamp lastUpdatedAt = 6;
+  string name = 7;
+  ShiftDay day = 8;
+  google.protobuf.Timestamp clockIn = 9;
+  google.protobuf.Timestamp clockOut = 10;
+}
+
+//
+//
+//
+//
+// Table: overrideShifts
+message OverrideShift {
+  enum Flag {
+    UNKNOWN = 0;
+  }
+
+  int64 id = 1;
+  int64 organizationId = 2;
+  optional int64 createdById = 3;
+  optional int64 updatedById = 4;
+  optional int64 workerId = 5;
+  google.protobuf.Timestamp createdAt = 6;
+  optional google.protobuf.Timestamp lastUpdatedAt = 7;
+  optional google.protobuf.Timestamp verifiedAt = 8;
+  optional google.protobuf.Timestamp completedAt = 9;
+  google.protobuf.Timestamp startsOn = 10;
+  google.protobuf.Timestamp endsOn = 11;
+  string name = 12;
+  ShiftDay day = 13;
+  google.protobuf.Timestamp overrideClockIn = 14;
+  google.protobuf.Timestamp overrideClockOut = 15;
+  string groupId = 16;
+  uint32 flags = 17;
+} 
