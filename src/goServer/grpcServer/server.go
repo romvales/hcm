@@ -1,7 +1,7 @@
 package grpcServer
 
 import (
-	"goServer/internal/core"
+	"goServer/internal/core/hcmcore"
 	"log"
 	"net"
 	"os"
@@ -33,7 +33,7 @@ func StartGRPCServer() {
 	defer listener.Close()
 	defer grpcServer.Stop()
 
-	core.Register(grpcServer)
+	hcmcore.Register(grpcServer)
 
 	if _grpcServerErr := grpcServer.Serve(listener); _grpcServerErr != nil {
 		log.Fatal(_grpcServerErr)

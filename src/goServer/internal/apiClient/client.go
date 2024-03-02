@@ -5,14 +5,17 @@ import (
 	goServerErrors "goServer/internal/errors"
 
 	supabase "github.com/nedpals/supabase-go"
+	supabaseCommunity "github.com/supabase-community/supabase-go"
 )
 
 var (
-	unsafeSupabaseClient = NewSupabaseClient()
+	unsafeSupabaseClient          = NewSupabaseClient()
+	unsafeSupabaseCommunityClient = NewSupabaseCommunityClient()
 )
 
 type RequestUsedClient struct {
-	supabaseClient *supabase.Client
+	supabaseClient           *supabase.Client
+	community_supabaseClient *supabaseCommunity.Client
 }
 
 type RequestRequiredFields interface {
@@ -28,8 +31,10 @@ func (c *RequestUsedClient) GetClientFromRequest(req RequestRequiredFields) (*Re
 	case pb.CoreServiceRequest_C_SUPABASE:
 		if isUnsafe {
 			c.supabaseClient = unsafeSupabaseClient
+			c.community_supabaseClient = unsafeSupabaseCommunityClient
 		} else {
 			c.supabaseClient = NewSupabaseClient()
+			c.community_supabaseClient = NewSupabaseCommunityClient()
 		}
 	default:
 		return c, goServerErrors.ErrInvalidClientFromRequestUnimplemented
@@ -40,4 +45,8 @@ func (c *RequestUsedClient) GetClientFromRequest(req RequestRequiredFields) (*Re
 
 func (c *RequestUsedClient) GetSupabaseClient() *supabase.Client {
 	return c.supabaseClient
+}
+
+func (c *RequestUsedClient) GetSupabaseCommunityClient() *supabaseCommunity.Client {
+	return c.community_supabaseClient
 }

@@ -8,11 +8,6 @@ option optimize_for = SPEED;
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 
-service HCMCoreService {
-
-
-}
-
 //
 //
 //
@@ -24,10 +19,12 @@ message Worker {
     G_MALE = 1;
     G_FEMALE = 2;
     G_OTHER = 4;
+
+    S_DELETED = 8;
   }
 
   int64 id = 1;
-  optional int64 userId = 2;
+  optional string userId = 2;
   optional int64 createdById = 3;
   optional int64 updatedById = 4;
   google.protobuf.Timestamp createdAt = 5;
@@ -42,6 +39,7 @@ message Worker {
   optional string mobile = 14;
   repeated google.protobuf.Struct addresses = 15;
   uint32 flags = 16;
+  string uuid = 17;
 }
 
 //
@@ -51,6 +49,18 @@ message Worker {
 message WorkerIdentityCard {
   enum Flag {
     UNKNOWN = 0;
+
+    C_EMPLOYEE = 1;
+    C_SCHOOL = 2;
+    C_BUSINESS = 4;
+    C_MEDICAL = 8;
+    C_GOVERNMENT = 16;
+    C_PASSPORT = 32;
+    C_PROFESSION = 64;
+    C_POSTAL = 128;
+    C_OTHER = 256;
+
+    S_DELETED = 512;
   }
 
   int64 id = 1;
@@ -64,6 +74,18 @@ message WorkerIdentityCard {
   string name = 9;
   optional google.protobuf.Struct extractedInfo = 10;
   uint32 flags = 11;
+  string uuid = 18;
+}
+
+//
+//
+//
+// Table: workersVerifiedIdentityCards
+message VerifiedWorkerIdentityCardRelation {
+  int64 id = 1;
+  int64 ownerId = 2;
+  int64 verifiedById = 3;
+  int64 cardId = 4;
 }
 
 //
@@ -82,6 +104,7 @@ message WorkerIdentityCardRelation {
 message Organization {
   enum Flag {
     UNKNOWN = 0;
+
   }
 
   enum Industry {
@@ -117,6 +140,7 @@ message Organization {
   optional string overrideIndustry = 7;
   string name = 8;
   uint32 flags = 9;
+  string uuid = 10;
 }
 
 
@@ -136,12 +160,21 @@ message Member {
     S_ONLEAVE = 16;
     S_TERMINATED = 32;
     S_SUSPENDED = 64;
+
+    T_FULLTIME = 128;
+    T_PARTTIME = 256;
+    T_SEASONAL = 512;
+    T_TEMPORARY = 1024;
+    T_LEASED = 2048;
+    T_CONTINGENT = 4096;
+
+    S_DELETED = 8192;
   }
 
   int64 id = 1;
   int64 organizationId = 2;
   int64 workerId = 3;
-  optional int64 hiredBy = 4;
+  optional int64 hiredById = 4;
   google.protobuf.Timestamp createdAt = 5;
   optional google.protobuf.Timestamp lastUpdatedAt = 6;
   optional google.protobuf.Timestamp hiredAt = 7;
@@ -151,6 +184,7 @@ message Member {
   optional google.protobuf.Timestamp returnedAt = 11;
   optional google.protobuf.Timestamp scheduledSuspensionAt = 12;
   uint32 flags = 15;
+  string uuid = 16;
 }
 
 //
@@ -170,10 +204,12 @@ message WorkerOrganizationRelation {
 message JoinRequest {
   enum Flag {
     UNKNOWN = 0;
+
     S_WAIT = 1;
     S_ACCEPT = 2;
     S_REJECT = 4;
     S_EXPIRED = 8;
+    S_DELETED = 16;
   }
 
   int64 id = 1;
@@ -182,6 +218,7 @@ message JoinRequest {
   google.protobuf.Timestamp createdAt = 4;
   google.protobuf.Timestamp expiredAt = 5;
   uint32 flags = 6;
+  string uuid = 7;
 }
 
 //
@@ -221,6 +258,7 @@ message Role {
   optional google.protobuf.Timestamp lastUpdatedAt = 6;
   string name = 7;
   uint32 flags = 8;
+  string uuid = 9;
 }
 
 //
@@ -261,6 +299,7 @@ message Team {
   optional google.protobuf.Timestamp lastUpdatedAt = 6;
   string name = 7;
   uint32 flags = 8;
+  string uuid = 9;
 }
 
 //
@@ -280,6 +319,8 @@ message TeamMemberRelation {
 message Compensation {
   enum Flag {
     UNKNOWN = 0;
+
+    S_PAID = 1;
   }
 
   int64 id = 1;
@@ -297,6 +338,7 @@ message Compensation {
   float dvalue = 13;
   float value = 14;
   uint32 flags = 15;
+  string uuid = 16;
 }
 
 //
@@ -319,23 +361,26 @@ message Addition {
   string name = 8;
   float value = 9;
   uint32 flags = 10;
+  string uuid = 11;
 }
 
 //
 //
 //
 // Table: deductions
-message Deducion {
+message Deduction {
   enum Flag {
     UNKNOWN = 0;
 
     T_EPHEMERAL = 1;
     T_VOLUNTARY = 2;
+
+    S_DELETED = 4;
   }
 
   int64 id = 1;
   optional int64 createdById = 2;
-  optional int64 updatedByid = 3;
+  optional int64 updatedById = 3;
   optional int64 workerId = 4;
   google.protobuf.Timestamp createdAt = 5;
   optional google.protobuf.Timestamp lastUpdatedAt = 6;
@@ -343,6 +388,7 @@ message Deducion {
   string name = 8;
   float value = 9;
   uint32 flags = 10;
+  string uuid = 11;
 }
 
 //
@@ -372,17 +418,21 @@ message CompensationDeductionRelation {
 message Payroll {
   enum Flag {
     UNKNOWN = 0;
+
+    S_PAID = 1;
   }
   
   int64 id = 1;
   int64 createdById = 2;
   int64 updatedById = 3;
-  int64 verifiedById = 4;
+  optional int64 verifiedById = 4;
   int64 organizationId = 5;
   google.protobuf.Timestamp createdAt = 6;
-  google.protobuf.Timestamp lastUpdatedAt = 7;
-  float total = 8;
-  uint32 flags = 9;
+  optional google.protobuf.Timestamp lastUpdatedAt = 7;
+  optional google.protobuf.Timestamp verifiedAt = 8;
+  float total = 9;
+  uint32 flags = 10;
+  string uuid = 11;
 }
 
 //
@@ -420,6 +470,7 @@ message Attendance {
   int64 lateTime = 14;
   int64 breakTime = 15;
   uint32 flags = 16;
+  string uuid = 17;
 }
 
 enum ShiftDay {
@@ -471,4 +522,5 @@ message OverrideShift {
   google.protobuf.Timestamp overrideClockOut = 15;
   string groupId = 16;
   uint32 flags = 17;
+  string uuid = 18;
 } 

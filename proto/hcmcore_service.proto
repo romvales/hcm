@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package entities;
+
+option go_package = "goServer/internal/core/pb";
+option optimize_for = SPEED;
+
+import "hcmcore.proto";
+
+service CoreService {
+
+  rpc getWorkerById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getOrganizationById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getOrganizationByCreatorId(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getRoleById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getTeamById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getRolesFromOrganization(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getTeamsFromOrganization(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getOrganizationMembers(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getOrganizationJoinRequests(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getWorkerJoinRequests(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getJoinRequestById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getCompensationById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getAdditionById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getDeductionById(CoreServiceRequest) returns (CoreServiceResponse);
+
+  rpc saveWorker(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc saveOrganization(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc saveRole(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc saveTeam(CoreServiceRequest) returns (CoreServiceResponse);
+
+  rpc deleteWorkerById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc deleteOrganizationById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc deleteRoleById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc deleteTeamById(CoreServiceRequest) returns (CoreServiceResponse);
+
+}
+
+message CoreServiceRequest {
+  enum CoreServiceRequestClient {
+    C_SUPABASE = 0;
+  }
+
+  CoreServiceRequestClient usedClient = 1;
+  bool clientUnsafe = 2;
+
+  optional string userId = 3;
+  optional int64 targetId = 6;
+  optional string targetUuid = 7;
+
+  optional Worker saveWorkerTarget = 8;
+  optional Organization saveOrganizationTarget = 9;
+  optional Role saveRoleTarget = 10;
+  optional Team saveTeamTarget = 11;
+}
+
+message CoreServiceResponse {
+  enum CoreServiceResponseCode {
+    C_NOERROR = 0;
+  }
+
+  CoreServiceResponseCode code = 1;
+  
+  optional SaveWorkerResponse saveWorkerResult = 2;
+}
+
+message SaveWorkerResponse {
+  optional Worker updatedTarget = 1;
+}
