@@ -44,9 +44,19 @@ func (c *RequestUsedClient) GetClientFromRequest(req RequestRequiredFields) (*Re
 }
 
 func (c *RequestUsedClient) GetSupabaseClient() *supabase.Client {
+	// Revert to using unsafe supabase client
+	if c.supabaseClient == nil {
+		return unsafeSupabaseClient
+	}
+
 	return c.supabaseClient
 }
 
 func (c *RequestUsedClient) GetSupabaseCommunityClient() *supabaseCommunity.Client {
+	// Revert to using unsafe community client
+	if c.community_supabaseClient == nil {
+		return unsafeSupabaseCommunityClient
+	}
+
 	return c.community_supabaseClient
 }

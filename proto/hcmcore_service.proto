@@ -7,6 +7,9 @@ option optimize_for = SPEED;
 
 import "hcmcore.proto";
 
+//
+//
+//
 service CoreService {
 
   rpc getWorkerById(CoreServiceRequest) returns (CoreServiceResponse);
@@ -36,6 +39,10 @@ service CoreService {
 
 }
 
+//
+//
+//
+//
 message CoreServiceRequest {
   enum CoreServiceRequestClient {
     C_SUPABASE = 0;
@@ -44,26 +51,65 @@ message CoreServiceRequest {
   CoreServiceRequestClient usedClient = 1;
   bool clientUnsafe = 2;
 
-  optional string userId = 3;
-  optional int64 targetId = 6;
-  optional string targetUuid = 7;
-
-  optional Worker saveWorkerTarget = 8;
-  optional Organization saveOrganizationTarget = 9;
-  optional Role saveRoleTarget = 10;
-  optional Team saveTeamTarget = 11;
+  optional GetterRequest getterRequest = 3;
+  optional SetterRequest setterRequest = 4;
 }
 
+//
+//
+//
+//
 message CoreServiceResponse {
   enum CoreServiceResponseCode {
     C_NOERROR = 0;
+    C_DBERROR = 1;
+    C_CLIENTERROR = 2;
   }
 
   CoreServiceResponseCode code = 1;
   
-  optional SaveWorkerResponse saveWorkerResult = 2;
+  optional GetterResponse getterResponse = 2;
+  optional SetterResponse setterResponse = 3;
 }
 
-message SaveWorkerResponse {
-  optional Worker updatedTarget = 1;
+//
+//
+//
+message GetterRequest {
+  optional int64 targetId = 1;
+  optional string targetUuid = 2;
+  optional string userId = 3;
+}
+
+//
+//
+//
+message GetterResponse {
+  optional string errorMessage = 10;
+}
+
+//
+//
+//
+message SetterRequest {
+  optional Worker workerTarget = 1;
+  optional Organization organizationTarget = 2;
+  optional Role roleTarget = 3;
+  optional Team teamTarget = 4;
+}
+
+//
+//
+//
+message SetterResponse {
+  optional Worker updatedWorkerTarget = 1;
+  optional Organization updatedOrganizationTarget = 2;
+  optional Role updatedRoleTarget = 3;
+  optional Team updatedTeamTarget = 4;
+
+  optional int64 targetId = 5;
+  optional string targetUuid = 6;
+  optional string userId = 7;
+
+  optional string errorMessage = 10;
 }

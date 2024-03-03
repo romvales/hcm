@@ -8,7 +8,7 @@ run:
 	@cd ${GODIR} && \
 		[ -e ./main ] && ./main || go run cmd/main.go
 
-proto-build:
+protobuild:
 	@./protogen.sh
 
 build:

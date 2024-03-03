@@ -2,12 +2,12 @@ package hcmcore
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"goServer/internal/apiClient"
 	"goServer/internal/core/converters"
 	"goServer/internal/core/pb"
 	goServerErrors "goServer/internal/errors"
-	"log"
+	"goServer/internal/messages"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -28,6 +28,21 @@ type _Context = context.Context
 
 func NewCoreServiceServer() *CoreServiceServer {
 	return &CoreServiceServer{}
+}
+
+func checkRequestForMissingParameters(req any, errMsg string) (*_Response, error) {
+	if req == nil {
+		err := goServerErrors.ErrMissingRequestParameter(errMsg)
+		msg := err.Error()
+
+		return &_Response{
+			SetterResponse: &pb.SetterResponse{
+				ErrorMessage: &msg,
+			},
+		}, err
+	}
+
+	return nil, nil
 }
 
 func (srv *CoreServiceServer) dependencies(req *_Request) (
@@ -55,11 +70,26 @@ func (srv *CoreServiceServer) countEmptyParameters(params map[string]any) (nonEm
 }
 
 func (srv *CoreServiceServer) GetWorkerById(ctx _Context, req *_Request) (res *_Response, err error) {
+	var _funcName = "CoreServiceServer.GetWorkerById()"
 	var id, columnToSearch string
 	var resp []*converters.Worker
+	var errMsg string
 
-	params := map[string]any{"userId": req.UserId, "id": req.TargetId, "uuid": req.TargetUuid}
-	errMsg := "CoreServiceServer.GetWorkerById(): provide at least one of the following `userId, workerId, workerUuid`"
+	getterRequest := req.GetterRequest
+
+	if res, err := checkRequestForMissingParameters(
+		getterRequest,
+		messages.MessageNoRequestBodyProvided(_funcName),
+	); err != nil {
+		return res, err
+	}
+
+	errMsg = messages.MessageProvideAtleastOneOfTheFollowing(_funcName, []string{"userId", "targetId", "targetUuid"})
+	params := map[string]any{
+		"userId": getterRequest.UserId,
+		"id":     getterRequest.TargetId,
+		"uuid":   getterRequest.TargetUuid,
+	}
 
 	if columns, count := srv.countEmptyParameters(params); count > 1 && count == 0 {
 		return &_Response{}, goServerErrors.ErrMissingRequestParameter(errMsg)
@@ -78,17 +108,29 @@ func (srv *CoreServiceServer) GetWorkerById(ctx _Context, req *_Request) (res *_
 		var client *supabase.Client
 
 		if client, _, err = srv.dependencies(req); err != nil {
-			return &_Response{}, err
+			errMsg := err.Error()
+			return &_Response{
+				Code: pb.CoreServiceResponse_C_CLIENTERROR,
+				GetterResponse: &pb.GetterResponse{
+					ErrorMessage: &errMsg,
+				},
+			}, err
 		} else {
 			err = client.DB.From("workers").Select().Limit(1).Eq(columnToSearch, id).Execute(&resp)
 		}
 
+		if err != nil {
+			errMsg := err.Error()
+
+			return &_Response{
+				Code: pb.CoreServiceResponse_C_DBERROR,
+				GetterResponse: &pb.GetterResponse{
+					ErrorMessage: &errMsg,
+				},
+			}, err
+		}
 	default:
 		return &_Response{}, goServerErrors.ErrInvalidClientFromRequestUnimplemented
-	}
-
-	if err != nil {
-		return &_Response{}, err
 	}
 
 	return &_Response{
@@ -180,137 +222,261 @@ func (srv *CoreServiceServer) GetDeductionById(ctx _Context, req *_Request) (res
 	}, nil
 }
 
+// SaveWorker saves the provided pb.Worker parameter.
 func (srv *CoreServiceServer) SaveWorker(ctx _Context, req *_Request) (res *_Response, err error) {
-	errMsg := "CoreServiceServer.SaveWorker(): no target provided"
+	var _funcName = "CoreServiceServer._SaveWorker()"
 
-	if req.SaveWorkerTarget == nil {
-		return &_Response{}, goServerErrors.ErrMissingRequestParameter(errMsg)
+	saveReq := req.SetterRequest
+
+	if res, err := checkRequestForMissingParameters(
+		saveReq, messages.MessageNoRequestBodyProvided(_funcName),
+	); err != nil {
+		return res, err
 	}
 
-	target := (&converters.Worker{}).TranslatePb(req.SaveWorkerTarget)
-	resp := converters.Worker{}
+	if res, err := checkRequestForMissingParameters(
+		saveReq, messages.MessageNoTargetProvided(_funcName),
+	); err != nil {
+		return res, err
+	}
+
+	target := (&converters.Worker{}).TranslatePb(saveReq.WorkerTarget)
+	resp := &converters.Worker{}
 
 	switch req.GetUsedClient() {
 	case pb.CoreServiceRequest_C_SUPABASE:
 		var client *supabaseCommunityGo.Client
 
 		if _, client, err = srv.dependencies(req); err != nil {
-			return &_Response{}, err
-		}
+			errMsg := err.Error()
 
-		var b []byte
+			return &_Response{
+				Code: pb.CoreServiceResponse_C_CLIENTERROR,
+				SetterResponse: &pb.SetterResponse{
+					ErrorMessage: &errMsg,
+				},
+			}, err
+		}
 
 		target.LastUpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+		query := client.From("workers").Upsert(target, "id", "", "planned").Single()
 
-		b, _, err = client.From("workers").Upsert(target, "username", "", "1").Single().Execute()
+		if _, err = query.ExecuteTo(resp); err != nil {
+			errMsg := err.Error()
 
-		if err := json.Unmarshal(b, &resp); err != nil {
-			log.Panic(err)
+			return &_Response{
+				Code: pb.CoreServiceResponse_C_DBERROR,
+				SetterResponse: &pb.SetterResponse{
+					ErrorMessage: &errMsg,
+				},
+			}, err
 		}
-	}
-
-	// fmt.Printf("%#v", resp.TranslatePb(&pb.Worker{}))
-
-	if err != nil {
-		return &_Response{}, err
 	}
 
 	return &_Response{
 		Code: pb.CoreServiceResponse_C_NOERROR,
-		SaveWorkerResult: &pb.SaveWorkerResponse{
-			UpdatedTarget: converters.ConvertMapToWorkerProto(&resp),
+		SetterResponse: &pb.SetterResponse{
+			UpdatedWorkerTarget: converters.ConvertMapToWorkerProto(resp),
 		},
 	}, nil
 }
 
 func (srv *CoreServiceServer) SaveOrganization(ctx _Context, req *_Request) (res *_Response, err error) {
-	errMsg := "CoreServiceServer.SaveOrganization(): no target provided"
+	var _funcName = "CoreServiceServer.SaveOrganization()"
 
-	if req.SaveOrganizationTarget == nil {
-		return &_Response{}, goServerErrors.ErrMissingRequestParameter(errMsg)
+	saveReq := req.SetterRequest
+
+	if res, err := checkRequestForMissingParameters(
+		saveReq,
+		messages.MessageNoRequestBodyProvided(_funcName),
+	); err != nil {
+		return res, err
 	}
 
-	target := (&converters.Organization{}).TranslatePb(req.SaveOrganizationTarget)
+	if res, err := checkRequestForMissingParameters(
+		saveReq.OrganizationTarget,
+		messages.MessageNoTargetProvided(_funcName),
+	); err != nil {
+		return res, err
+	}
+
+	target := (&converters.Organization{}).TranslatePb(req.SetterRequest.OrganizationTarget)
+	resp := &converters.Organization{}
 
 	switch req.GetUsedClient() {
 	case pb.CoreServiceRequest_C_SUPABASE:
 		var client *supabaseCommunityGo.Client
 
 		if _, client, err = srv.dependencies(req); err != nil {
-			return &_Response{}, err
+			errMsg := err.Error()
+
+			return &_Response{
+				Code: pb.CoreServiceResponse_C_CLIENTERROR,
+				SetterResponse: &pb.SetterResponse{
+					ErrorMessage: &errMsg,
+				},
+			}, err
 		}
 
 		target.LastUpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+		query := client.From("organizations").Upsert(target, "id", "", "planned").Single()
 
-		_, _, err = client.From("organizations").Upsert(target, "name", "", "1").Execute()
-	}
+		if _, err = query.ExecuteTo(resp); err != nil {
+			errMsg := err.Error()
 
-	if err != nil {
-		return &_Response{}, err
+			return &_Response{
+				Code: pb.CoreServiceResponse_C_DBERROR,
+				SetterResponse: &pb.SetterResponse{
+					ErrorMessage: &errMsg,
+				},
+			}, err
+		}
 	}
 
 	return &_Response{
 		Code: pb.CoreServiceResponse_C_NOERROR,
+		SetterResponse: &pb.SetterResponse{
+			UpdatedOrganizationTarget: converters.ConvertMapToOrganizationProto(resp),
+		},
 	}, nil
 }
 
 func (srv *CoreServiceServer) SaveRole(ctx _Context, req *_Request) (res *_Response, err error) {
-	errMsg := "CoreServiceServer.SaveRole(): no target provided"
+	var _funcName = "CoreServiceServer.SaveRole()"
 
-	if req.SaveRoleTarget == nil {
-		return &_Response{}, goServerErrors.ErrMissingRequestParameter(errMsg)
+	saveReq := req.SetterRequest
+
+	if res, err := checkRequestForMissingParameters(
+		saveReq,
+		messages.MessageNoRequestBodyProvided(_funcName),
+	); err != nil {
+		return res, err
 	}
 
-	target := (&converters.Role{}).TranslatePb(req.SaveRoleTarget)
+	if res, err := checkRequestForMissingParameters(
+		saveReq.RoleTarget,
+		messages.MessageNoTargetProvided(_funcName),
+	); err != nil {
+		return res, err
+	}
+
+	errMsg := messages.MessageRequiredFieldNotProvided(_funcName, "organizationId")
+	if saveReq.RoleTarget.GetOrganizationId() == 0 {
+		return &_Response{
+			SetterResponse: &pb.SetterResponse{
+				ErrorMessage: &errMsg,
+			},
+		}, errors.New(errMsg)
+	}
+
+	target := (&converters.Role{}).TranslatePb(req.SetterRequest.RoleTarget)
+	resp := &converters.Role{}
 
 	switch req.GetUsedClient() {
 	case pb.CoreServiceRequest_C_SUPABASE:
 		var client *supabaseCommunityGo.Client
 
 		if _, client, err = srv.dependencies(req); err != nil {
-			return &_Response{}, err
+			errMsg := err.Error()
+
+			return &_Response{
+				Code: pb.CoreServiceResponse_C_CLIENTERROR,
+				SetterResponse: &pb.SetterResponse{
+					ErrorMessage: &errMsg,
+				},
+			}, err
 		}
 
 		target.LastUpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-		_, _, err = client.From("roles").Upsert(target, "uuid", "", "1").Execute()
-	}
 
-	if err != nil {
-		return &_Response{}, err
+		query := client.From("roles").Upsert(target, "id", "", "planned").Single()
+
+		if _, err = query.ExecuteTo(resp); err != nil {
+			errMsg := err.Error()
+
+			return &_Response{
+				Code: pb.CoreServiceResponse_C_DBERROR,
+				SetterResponse: &pb.SetterResponse{
+					ErrorMessage: &errMsg,
+				},
+			}, err
+		}
 	}
 
 	return &_Response{
 		Code: pb.CoreServiceResponse_C_NOERROR,
+		SetterResponse: &pb.SetterResponse{
+			UpdatedRoleTarget: converters.ConvertMapToRoleProto(resp),
+		},
 	}, nil
 }
 
 func (srv *CoreServiceServer) SaveTeam(ctx _Context, req *_Request) (res *_Response, err error) {
-	errMsg := "CoreServiceServer.SaveTeam(): no target provided"
+	var _funcName = "CoreServiceServer.SaveTeam()"
 
-	if req.SaveTeamTarget == nil {
-		return &_Response{}, goServerErrors.ErrMissingRequestParameter(errMsg)
+	saveReq := req.SetterRequest
+
+	if res, err := checkRequestForMissingParameters(
+		saveReq,
+		messages.MessageNoRequestBodyProvided(_funcName),
+	); err != nil {
+		return res, err
 	}
 
-	target := (&converters.Team{}).TranslatePb(req.SaveTeamTarget)
+	if res, err := checkRequestForMissingParameters(
+		saveReq.TeamTarget,
+		messages.MessageNoTargetProvided(_funcName),
+	); err != nil {
+		return res, err
+	}
+
+	errMsg := messages.MessageRequiredFieldNotProvided(_funcName, "organizationId")
+	if saveReq.TeamTarget.GetOrganizationId() == 0 {
+		return &_Response{
+			SetterResponse: &pb.SetterResponse{
+				ErrorMessage: &errMsg,
+			},
+		}, errors.New(errMsg)
+	}
+
+	target := (&converters.Team{}).TranslatePb(saveReq.TeamTarget)
+	resp := &converters.Team{}
 
 	switch req.GetUsedClient() {
 	case pb.CoreServiceRequest_C_SUPABASE:
 		var client *supabaseCommunityGo.Client
 
 		if _, client, err = srv.dependencies(req); err != nil {
-			return &_Response{}, err
+			errMsg := err.Error()
+
+			return &_Response{
+				Code: pb.CoreServiceResponse_C_CLIENTERROR,
+				SetterResponse: &pb.SetterResponse{
+					ErrorMessage: &errMsg,
+				},
+			}, err
 		}
 
 		target.LastUpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-		_, _, err = client.From("teams").Upsert(target, "uuid", "", "1").Execute()
-	}
+		query := client.From("teams").Upsert(target, "id", "", "planned").Single()
 
-	if err != nil {
-		return &_Response{}, err
+		if _, err := query.ExecuteTo(resp); err != nil {
+			errMsg := err.Error()
+
+			return &_Response{
+				Code: pb.CoreServiceResponse_C_DBERROR,
+				SetterResponse: &pb.SetterResponse{
+					ErrorMessage: &errMsg,
+				},
+			}, err
+		}
 	}
 
 	return &_Response{
 		Code: pb.CoreServiceResponse_C_NOERROR,
+		SetterResponse: &pb.SetterResponse{
+			UpdatedTeamTarget: converters.ConvertMapToTeamProto(resp),
+		},
 	}, nil
 }
 

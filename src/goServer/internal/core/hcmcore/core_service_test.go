@@ -5,6 +5,7 @@ import (
 	"errors"
 	"goServer/internal/core/hcmcore"
 	"goServer/internal/core/pb"
+	"strconv"
 	"testing"
 	"time"
 
@@ -20,7 +21,8 @@ var (
 )
 
 const (
-	TestSaveWorkerParams_N_WORKERS = 10
+	TestSaveWorkerParams_N_WORKERS      = 10
+	TestSaveOrganization_N_ORGANIZATION = 10
 )
 
 func TestGetWorkerById(t *testing.T) {
@@ -28,7 +30,12 @@ func TestGetWorkerById(t *testing.T) {
 
 	workerId := int64(0)
 
-	_, err := coreService.GetWorkerById(context.TODO(), &pb.CoreServiceRequest{TargetId: &workerId})
+	_, err := coreService.GetWorkerById(context.TODO(), &pb.CoreServiceRequest{
+		GetterRequest: &pb.GetterRequest{
+			TargetId: &workerId,
+		},
+	})
+
 	if err != nil {
 		t.Log(err)
 	}
@@ -87,6 +94,7 @@ func TestGetDeductionById(t *testing.T) {
 func TestSaveWorker(t *testing.T) {
 	assert := assert.New(t)
 	coreService := hcmcore.NewCoreServiceServer()
+	client := coreService.GetSupabaseCommunityClient()
 
 	t.Run("create a new worker for each faked data generated", func(t *testing.T) {
 		faker := faker.New()
@@ -118,8 +126,10 @@ func TestSaveWorker(t *testing.T) {
 			}
 
 			res, err := coreService.SaveWorker(context.Background(), &pb.CoreServiceRequest{
-				UsedClient:       pb.CoreServiceRequest_C_SUPABASE,
-				SaveWorkerTarget: worker,
+				UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+				SetterRequest: &pb.SetterRequest{
+					WorkerTarget: worker,
+				},
 			})
 
 			if err != nil {
@@ -133,39 +143,239 @@ func TestSaveWorker(t *testing.T) {
 			)
 
 			assert.NotEmpty(
-				res.SaveWorkerResult,
+				res.SetterResponse,
 				"did not return proper response",
 			)
 
-			saveWorkerResult := res.GetSaveWorkerResult()
-			updatedWorker := saveWorkerResult.GetUpdatedTarget()
+			saveWorkerResult := res.GetSetterResponse()
+			updatedWorker := saveWorkerResult.GetUpdatedWorkerTarget()
 
 			assert.NotEmpty(
 				updatedWorker,
 				"did not return the updated target",
 			)
 
+			assert.NotEmpty(
+				updatedWorker.Id,
+				"did not returned an id",
+			)
+
+			assert.Equal(
+				worker.GetFirstName(),
+				updatedWorker.GetFirstName(),
+				"did not match the expected name",
+			)
+
+			// cleanup
+			_, err = client.From("workers").Delete("", "").Eq("id", strconv.FormatInt(updatedWorker.Id, 10)).ExecuteTo(nil)
+			if err != nil {
+				t.Log(err)
+			}
+
 		}
 
 	})
 
-	t.Error(ErrCoreServiceServerUnimplementedMethod)
 }
 
 func TestSaveOrganization(t *testing.T) {
-	// coreService := hcmcore.NewCoreServiceServer()
+	assert := assert.New(t)
+	coreService := hcmcore.NewCoreServiceServer()
+	client := coreService.GetSupabaseCommunityClient()
 
-	t.Error(ErrCoreServiceServerUnimplementedMethod)
+	t.Run("create an organization using faked data", func(t *testing.T) {
+		faker := faker.New()
+
+		for i := 0; i < TestSaveOrganization_N_ORGANIZATION; i++ {
+			organization := &pb.Organization{
+				Name: faker.Company().Name(),
+				Industry: pb.Organization_Industry(faker.RandomIntElement([]int{
+					int(pb.Organization_AGRICULTURE),
+					int(pb.Organization_CHEMICAL),
+					int(pb.Organization_COMMERCE),
+					int(pb.Organization_CONSTRUCTION),
+					int(pb.Organization_EDUCATION),
+					int(pb.Organization_FINANCIAL),
+					int(pb.Organization_FORESTRY),
+					int(pb.Organization_HEALTH),
+				})),
+				Flags: uint32(pb.Organization_UNKNOWN),
+				Uuid:  uuid.NewString(),
+			}
+
+			res, err := coreService.SaveOrganization(context.Background(), &pb.CoreServiceRequest{
+				UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+				SetterRequest: &pb.SetterRequest{
+					OrganizationTarget: organization,
+				},
+			})
+
+			if err != nil {
+				t.Error(err)
+			}
+
+			assert.NotEmpty(
+				res,
+				"no response was returned by the function",
+			)
+
+			assert.NotEmpty(
+				res.SetterResponse,
+				"did not return a proper response",
+			)
+
+			updatedOrganization := res.SetterResponse.UpdatedOrganizationTarget
+
+			assert.NotEmpty(
+				updatedOrganization,
+				"did not returned the updated version of the organization",
+			)
+
+			assert.Equal(
+				organization.GetName(),
+				updatedOrganization.GetName(),
+				"did not match the expected organization name",
+			)
+
+			// cleanup
+			_, err = client.From("organizations").Delete("", "").Eq("id", strconv.FormatInt(updatedOrganization.GetId(), 10)).ExecuteTo(nil)
+			if err != nil {
+				t.Log(err)
+			}
+		}
+
+	})
+
 }
 
 func TestSaveRole(t *testing.T) {
-	// coreService := hcmcore.NewCoreServiceServer()
+	assert := assert.New(t)
+	coreService := hcmcore.NewCoreServiceServer()
+	client := coreService.GetSupabaseCommunityClient()
 
-	t.Error(ErrCoreServiceServerUnimplementedMethod)
+	t.Run("create a new role for an organization", func(t *testing.T) {
+		organization := createMockOrganization(t)
+		mockRoles := []string{
+			"Chief Executive Officer",
+			"Chief Operations Manager",
+			"General Manager",
+			"Software Engineer",
+			"Project Manager",
+			"Accountant",
+			"Financial Manager",
+			"English Teacher",
+		}
+
+		for _, role := range mockRoles {
+
+			role := &pb.Role{
+				Name:           role,
+				OrganizationId: organization.GetId(),
+				Flags:          uint32(pb.Role_UNKNOWN),
+				Uuid:           uuid.NewString(),
+			}
+
+			res, err := coreService.SaveRole(context.Background(), &pb.CoreServiceRequest{
+				UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+				SetterRequest: &pb.SetterRequest{
+					RoleTarget: role,
+				},
+			})
+
+			if err != nil {
+				t.Log(err)
+			}
+
+			assert.NotEmpty(
+				res,
+				"did not return a proper response",
+			)
+
+			updatedRole := res.SetterResponse.GetUpdatedRoleTarget()
+
+			assert.NotEmpty(
+				updatedRole,
+				"did not return the updated role",
+			)
+
+			// cleanup
+			_, err = client.From("roles").Delete("", "").Eq("id", strconv.FormatInt(updatedRole.Id, 10)).ExecuteTo(nil)
+			if err != nil {
+				t.Log(err)
+			}
+		}
+
+		// cleanup
+		_, err := client.From("organizations").Delete("", "").Eq("id", strconv.FormatInt(organization.GetId(), 10)).ExecuteTo(nil)
+		if err != nil {
+			t.Log(err)
+		}
+
+	})
+
 }
 
 func TestSaveTeam(t *testing.T) {
-	// coreService := hcmcore.NewCoreServiceServer()
+	assert := assert.New(t)
+	coreService := hcmcore.NewCoreServiceServer()
+	client := coreService.GetSupabaseCommunityClient()
+
+	t.Run("create a new team for an organization", func(t *testing.T) {
+		organization := createMockOrganization(t)
+
+		mockTeams := []string{
+			"English Department",
+			"Engineering Department (IT)",
+			"Engineering Department (Civil)",
+			"Medical Department",
+			"Mathematics Department",
+		}
+
+		for _, team := range mockTeams {
+
+			team := &pb.Team{
+				Name:           team,
+				OrganizationId: organization.Id,
+				Flags:          uint32(pb.Team_UNKNOWN),
+				Uuid:           uuid.NewString(),
+			}
+
+			res, err := coreService.SaveTeam(context.Background(), &pb.CoreServiceRequest{
+				UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+				SetterRequest: &pb.SetterRequest{
+					TeamTarget: team,
+				},
+			})
+
+			if err != nil {
+				t.Log(err)
+			}
+
+			assert.NotEmpty(
+				res,
+				"did not return a proper response",
+			)
+
+			updatedTeam := res.SetterResponse.GetUpdatedTeamTarget()
+
+			assert.NotEmpty(
+				updatedTeam,
+				"did not return the updated data of the mock team",
+			)
+
+			// cleanup
+			_, err = client.From("teams").Delete("", "").Eq("id", strconv.FormatInt(updatedTeam.Id, 10)).ExecuteTo(nil)
+			if err != nil {
+				t.Log(err)
+			}
+		}
+
+		// cleanup
+		_, err := client.From("organizations").Delete("", "").Eq("id", strconv.FormatInt(organization.Id, 10)).ExecuteTo(nil)
+		if err != nil {
+			t.Log(err)
+		}
+	})
 
 	t.Error(ErrCoreServiceServerUnimplementedMethod)
 }
@@ -184,4 +394,27 @@ func TestDeleteRoleById(t *testing.T) {
 
 func TestDeleteTeamById(t *testing.T) {
 	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
+func createMockOrganization(t *testing.T) *pb.Organization {
+	coreService := hcmcore.NewCoreServiceServer()
+	faker := faker.New()
+
+	// Create a mock organization
+	res, err := coreService.SaveOrganization(context.Background(), &pb.CoreServiceRequest{
+		SetterRequest: &pb.SetterRequest{
+			OrganizationTarget: &pb.Organization{
+				Name:     faker.Company().Name(),
+				Industry: pb.Organization_EDUCATION,
+				Flags:    uint32(pb.Organization_UNKNOWN),
+				Uuid:     uuid.NewString(),
+			},
+		},
+	})
+
+	if err != nil {
+		t.Log(err)
+	}
+
+	return res.GetSetterResponse().GetUpdatedOrganizationTarget()
 }
