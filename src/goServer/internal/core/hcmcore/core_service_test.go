@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jaswdr/faker"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -97,33 +96,8 @@ func TestSaveWorker(t *testing.T) {
 	client := coreService.GetSupabaseCommunityClient()
 
 	t.Run("create a new worker for each faked data generated", func(t *testing.T) {
-		faker := faker.New()
-
 		for i := 0; i < TestSaveWorkerParams_N_WORKERS; i++ {
-			fakeAddress := faker.Address()
-			middleName := faker.Person().LastName()
-			worker := &pb.Worker{
-				Uuid:       uuid.NewString(),
-				CreatedAt:  timestamppb.Now(),
-				FirstName:  faker.Person().FirstNameMale(),
-				MiddleName: &middleName,
-				LastName:   faker.Person().LastName(),
-				Birthdate:  timestamppb.New(faker.Time().Time(time.Now())),
-				Email:      faker.Internet().Email(),
-				Username:   faker.Internet().User(),
-				Addresses: []*structpb.Struct{
-					{
-						Fields: map[string]*structpb.Value{
-							"addressLine1": structpb.NewStringValue(fakeAddress.Address()),
-							"addressLine2": structpb.NewStringValue(fakeAddress.Address()),
-							"city":         structpb.NewStringValue(fakeAddress.City()),
-							"state":        structpb.NewStringValue(fakeAddress.State()),
-							"country":      structpb.NewStringValue(fakeAddress.Country()),
-						},
-					},
-				},
-				Flags: uint32(pb.Worker_G_MALE),
-			}
+			worker := createMockWorker(t, false)
 
 			res, err := coreService.SaveWorker(context.Background(), &pb.CoreServiceRequest{
 				UsedClient: pb.CoreServiceRequest_C_SUPABASE,
@@ -200,7 +174,6 @@ func TestSaveOrganization(t *testing.T) {
 					int(pb.Organization_HEALTH),
 				})),
 				Flags: uint32(pb.Organization_UNKNOWN),
-				Uuid:  uuid.NewString(),
 			}
 
 			res, err := coreService.SaveOrganization(context.Background(), &pb.CoreServiceRequest{
@@ -266,14 +239,9 @@ func TestSaveRole(t *testing.T) {
 			"English Teacher",
 		}
 
-		for _, role := range mockRoles {
+		for _, roleName := range mockRoles {
 
-			role := &pb.Role{
-				Name:           role,
-				OrganizationId: organization.GetId(),
-				Flags:          uint32(pb.Role_UNKNOWN),
-				Uuid:           uuid.NewString(),
-			}
+			role := createMockRole(t, roleName, organization.Id)
 
 			res, err := coreService.SaveRole(context.Background(), &pb.CoreServiceRequest{
 				UsedClient: pb.CoreServiceRequest_C_SUPABASE,
@@ -331,14 +299,8 @@ func TestSaveTeam(t *testing.T) {
 			"Mathematics Department",
 		}
 
-		for _, team := range mockTeams {
-
-			team := &pb.Team{
-				Name:           team,
-				OrganizationId: organization.Id,
-				Flags:          uint32(pb.Team_UNKNOWN),
-				Uuid:           uuid.NewString(),
-			}
+		for _, teamName := range mockTeams {
+			team := createMockTeam(t, teamName, organization.GetId())
 
 			res, err := coreService.SaveTeam(context.Background(), &pb.CoreServiceRequest{
 				UsedClient: pb.CoreServiceRequest_C_SUPABASE,
@@ -376,12 +338,128 @@ func TestSaveTeam(t *testing.T) {
 			t.Log(err)
 		}
 	})
+}
 
+func TestSaveWorkerIdentityCard(t *testing.T) {
+	assert := assert.New(t)
+	coreService := hcmcore.NewCoreServiceServer()
+	client := coreService.GetSupabaseCommunityClient()
+
+	t.Run("should create a new identity card for a mock worker", func(t *testing.T) {
+		faker := faker.New()
+		worker := createMockWorker(t, true)
+
+		identificationCards := []*pb.WorkerIdentityCard{
+			{
+				Name:          "SSS Identification Card",
+				FrontImageUrl: faker.Internet().URL(),
+				BackImageUrl:  faker.Internet().URL(),
+				ExtractedInfo: &structpb.Struct{},
+			},
+			{
+				Name:          "PhilHealth Card",
+				FrontImageUrl: faker.Internet().URL(),
+				BackImageUrl:  faker.Internet().URL(),
+				ExtractedInfo: &structpb.Struct{},
+			},
+			{
+				Name:          "National ID",
+				FrontImageUrl: faker.Internet().URL(),
+				BackImageUrl:  faker.Internet().URL(),
+				ExtractedInfo: &structpb.Struct{},
+			},
+		}
+
+		for _, card := range identificationCards {
+			card.WorkerId = worker.Id
+
+			res, err := coreService.SaveWorkerIdentityCard(context.Background(), &pb.CoreServiceRequest{
+				UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+				SetterRequest: &pb.SetterRequest{
+					IdentityCardTarget: card,
+				},
+			})
+
+			assert.NotEmpty(
+				res,
+				"did not returned a proper response",
+			)
+
+			assert.NoError(
+				err,
+				"expected for SaveWorkerIdentityCard to work properly",
+			)
+
+			updatedCard := res.SetterResponse.UpdatedIdentityCardTarget
+
+			assert.NotEmpty(
+				updatedCard,
+				"did not returned the updated identity card",
+			)
+
+			// cleanup
+			_, err = client.From("workerIdentityCards").Delete("", "").Eq("id", strconv.FormatInt(updatedCard.Id, 10)).ExecuteTo(nil)
+			if err != nil {
+				t.Error(err)
+			}
+		}
+
+		// cleanup
+		_, err := coreService.DeleteWorkerById(context.Background(), &pb.CoreServiceRequest{
+			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+			SetterRequest: &pb.SetterRequest{
+				TargetId: &worker.Id,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+}
+
+func TestSaveMember(t *testing.T) {
+	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
+func TestSaveCompensation(t *testing.T) {
+	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
+func TestSaveAddition(t *testing.T) {
+	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
+func TestSaveDeduction(t *testing.T) {
+	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
+func TestSaveShift(t *testing.T) {
 	t.Error(ErrCoreServiceServerUnimplementedMethod)
 }
 
 func TestDeleteWorkerById(t *testing.T) {
-	t.Error(ErrCoreServiceServerUnimplementedMethod)
+	assert := assert.New(t)
+	coreService := hcmcore.NewCoreServiceServer()
+
+	t.Run("should delete the mock user persisted on the database", func(t *testing.T) {
+		worker := createMockWorker(t, true)
+
+		res, err := coreService.DeleteWorkerById(context.Background(), &pb.CoreServiceRequest{
+			SetterRequest: &pb.SetterRequest{
+				TargetId: &worker.Id,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(
+			res.GetCode(),
+			pb.CoreServiceResponse_C_NOERROR,
+			"did not successfully returned a C_NOERROR code",
+		)
+	})
 }
 
 func TestDeleteOrganizationById(t *testing.T) {
@@ -396,6 +474,34 @@ func TestDeleteTeamById(t *testing.T) {
 	t.Error(ErrCoreServiceServerUnimplementedMethod)
 }
 
+func TestDeleteWorkerIdentityCardById(t *testing.T) {
+	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
+func TestDeleteCompensationById(t *testing.T) {
+	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
+func TestDeleteMemberById(t *testing.T) {
+	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
+func TestDeletePayrollById(t *testing.T) {
+	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
+func TestDeleteAdditionById(t *testing.T) {
+	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
+func TestDeleteDeductionById(t *testing.T) {
+	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
+func TestDeleteShiftById(t *testing.T) {
+	t.Error(ErrCoreServiceServerUnimplementedMethod)
+}
+
 func createMockOrganization(t *testing.T) *pb.Organization {
 	coreService := hcmcore.NewCoreServiceServer()
 	faker := faker.New()
@@ -407,7 +513,6 @@ func createMockOrganization(t *testing.T) *pb.Organization {
 				Name:     faker.Company().Name(),
 				Industry: pb.Organization_EDUCATION,
 				Flags:    uint32(pb.Organization_UNKNOWN),
-				Uuid:     uuid.NewString(),
 			},
 		},
 	})
@@ -417,4 +522,71 @@ func createMockOrganization(t *testing.T) *pb.Organization {
 	}
 
 	return res.GetSetterResponse().GetUpdatedOrganizationTarget()
+}
+
+func createMockTeam(_ *testing.T, name string, organizationId int64) *pb.Team {
+	team := &pb.Team{
+		Name:           name,
+		OrganizationId: organizationId,
+		Flags:          uint32(pb.Team_UNKNOWN),
+	}
+
+	return team
+}
+
+func createMockRole(_ *testing.T, name string, organizationId int64) *pb.Role {
+	role := &pb.Role{
+		Name:           name,
+		OrganizationId: organizationId,
+		Flags:          uint32(pb.Role_UNKNOWN),
+	}
+
+	return role
+}
+
+func createMockWorker(t *testing.T, persist bool) *pb.Worker {
+	coreService := hcmcore.NewCoreServiceServer()
+	faker := faker.New()
+
+	fakeAddress := faker.Address()
+	middleName := faker.Person().LastName()
+
+	worker := &pb.Worker{
+		CreatedAt:  timestamppb.Now(),
+		FirstName:  faker.Person().FirstNameMale(),
+		MiddleName: &middleName,
+		LastName:   faker.Person().LastName(),
+		Birthdate:  timestamppb.New(faker.Time().Time(time.Now())),
+		Email:      faker.Internet().Email(),
+		Username:   faker.Internet().User(),
+		Addresses: []*structpb.Struct{
+			{
+				Fields: map[string]*structpb.Value{
+					"addressLine1": structpb.NewStringValue(fakeAddress.Address()),
+					"addressLine2": structpb.NewStringValue(fakeAddress.Address()),
+					"city":         structpb.NewStringValue(fakeAddress.City()),
+					"state":        structpb.NewStringValue(fakeAddress.State()),
+					"country":      structpb.NewStringValue(fakeAddress.Country()),
+				},
+			},
+		},
+		Flags: uint32(pb.Worker_G_MALE),
+	}
+
+	if persist {
+		res, err := coreService.SaveWorker(context.Background(), &pb.CoreServiceRequest{
+			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+			SetterRequest: &pb.SetterRequest{
+				WorkerTarget: worker,
+			},
+		})
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		worker = res.SetterResponse.UpdatedWorkerTarget
+	}
+
+	return worker
 }

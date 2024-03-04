@@ -26,16 +26,32 @@ service CoreService {
   rpc getCompensationById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc getAdditionById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc getDeductionById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getPayrollById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getAttendanceById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getShiftById(CoreServiceRequest) returns (CoreServiceResponse);
 
   rpc saveWorker(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc saveMember(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc saveWorkerIdentityCard(CoreServiceRequest) returns (CoreServiceResponse);
   rpc saveOrganization(CoreServiceRequest) returns (CoreServiceResponse);
   rpc saveRole(CoreServiceRequest) returns (CoreServiceResponse);
   rpc saveTeam(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc saveCompensation(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc saveAddition(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc saveDeduction(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc savePayroll(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc saveAttendance(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc saveShift(CoreServiceRequest) returns (CoreServiceResponse);
 
   rpc deleteWorkerById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc deleteWorkerIdentityCardById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc deleteOrganizationById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc deleteRoleById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc deleteTeamById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc deleteCompensationById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc deleteAdditionById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc deleteDeductionById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc deleteShiftById(CoreServiceRequest) returns (CoreServiceResponse);
 
 }
 
@@ -64,6 +80,7 @@ message CoreServiceResponse {
     C_NOERROR = 0;
     C_DBERROR = 1;
     C_CLIENTERROR = 2;
+    C_MISSINGPARAMETERS = 3;
   }
 
   CoreServiceResponseCode code = 1;
@@ -92,10 +109,32 @@ message GetterResponse {
 //
 //
 message SetterRequest {
+  enum ShiftOpType {
+    T_SHIFT = 0;
+    T_OVERRIDESHIFT = 1;
+  }
+
   optional Worker workerTarget = 1;
   optional Organization organizationTarget = 2;
   optional Role roleTarget = 3;
   optional Team teamTarget = 4;
+
+  optional int64 targetId = 5;
+  optional string targetUuid = 6;
+  optional string userId = 7;
+
+  optional bool softDeleteOp = 8;
+
+  optional ShiftOpType targetShiftType = 9;
+  optional Shift shiftTarget = 10;
+  optional OverrideShift overrideShiftTarget = 11;
+  optional WorkerIdentityCard identityCardTarget = 12;
+  optional Member memberTarget = 13;
+  optional Compensation compensationTarget = 14;
+  optional Addition additionTarget = 15;
+  optional Deduction deductionTarget = 16;
+  optional Payroll payrollTarget = 17;
+  optional Attendance attendanceTarget = 18;
 }
 
 //
@@ -112,4 +151,16 @@ message SetterResponse {
   optional string userId = 7;
 
   optional string errorMessage = 10;
+  bool softDeleteOp = 11;
+
+  optional WorkerIdentityCard updatedIdentityCardTarget = 12;
+  optional Member updatedMemberTarget = 13;
+  optional Compensation updatedCompensationTarget = 14;
+  optional Addition updatedAdditionTarget = 15;
+  optional Deduction updatedDeductionTarget = 16;
+  optional Payroll updatedPayrollTarget = 17;
+  optional Attendance updatedAttendanceTarget = 18;
+  optional Shift updatedShiftTarget = 19;
+  optional OverrideShift updatedOverrideShiftTarget = 20;
+  optional SetterRequest.ShiftOpType targetShiftType = 21;
 }

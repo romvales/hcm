@@ -36,14 +36,30 @@ type CoreServiceClient interface {
 	GetCompensationById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	GetAdditionById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	GetDeductionById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	GetPayrollById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	GetAttendanceById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	GetShiftById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	SaveWorker(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	SaveMember(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	SaveWorkerIdentityCard(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	SaveOrganization(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	SaveRole(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	SaveTeam(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	SaveCompensation(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	SaveAddition(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	SaveDeduction(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	SavePayroll(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	SaveAttendance(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	SaveShift(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	DeleteWorkerById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	DeleteWorkerIdentityCardById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	DeleteOrganizationById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	DeleteRoleById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	DeleteTeamById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	DeleteCompensationById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	DeleteAdditionById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	DeleteDeductionById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	DeleteShiftById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 }
 
 type coreServiceClient struct {
@@ -180,9 +196,54 @@ func (c *coreServiceClient) GetDeductionById(ctx context.Context, in *CoreServic
 	return out, nil
 }
 
+func (c *coreServiceClient) GetPayrollById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/getPayrollById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) GetAttendanceById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/getAttendanceById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) GetShiftById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/getShiftById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *coreServiceClient) SaveWorker(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
 	out := new(CoreServiceResponse)
 	err := c.cc.Invoke(ctx, "/entities.CoreService/saveWorker", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) SaveMember(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/saveMember", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) SaveWorkerIdentityCard(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/saveWorkerIdentityCard", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -216,9 +277,72 @@ func (c *coreServiceClient) SaveTeam(ctx context.Context, in *CoreServiceRequest
 	return out, nil
 }
 
+func (c *coreServiceClient) SaveCompensation(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/saveCompensation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) SaveAddition(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/saveAddition", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) SaveDeduction(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/saveDeduction", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) SavePayroll(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/savePayroll", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) SaveAttendance(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/saveAttendance", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) SaveShift(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/saveShift", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *coreServiceClient) DeleteWorkerById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
 	out := new(CoreServiceResponse)
 	err := c.cc.Invoke(ctx, "/entities.CoreService/deleteWorkerById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) DeleteWorkerIdentityCardById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/deleteWorkerIdentityCardById", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -252,6 +376,42 @@ func (c *coreServiceClient) DeleteTeamById(ctx context.Context, in *CoreServiceR
 	return out, nil
 }
 
+func (c *coreServiceClient) DeleteCompensationById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/deleteCompensationById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) DeleteAdditionById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/deleteAdditionById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) DeleteDeductionById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/deleteDeductionById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreServiceClient) DeleteShiftById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/deleteShiftById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CoreServiceServer is the server API for CoreService service.
 // All implementations must embed UnimplementedCoreServiceServer
 // for forward compatibility
@@ -270,14 +430,30 @@ type CoreServiceServer interface {
 	GetCompensationById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	GetAdditionById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	GetDeductionById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	GetPayrollById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	GetAttendanceById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	GetShiftById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	SaveWorker(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	SaveMember(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	SaveWorkerIdentityCard(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	SaveOrganization(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	SaveRole(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	SaveTeam(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	SaveCompensation(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	SaveAddition(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	SaveDeduction(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	SavePayroll(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	SaveAttendance(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	SaveShift(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	DeleteWorkerById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	DeleteWorkerIdentityCardById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	DeleteOrganizationById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	DeleteRoleById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	DeleteTeamById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	DeleteCompensationById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	DeleteAdditionById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	DeleteDeductionById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	DeleteShiftById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	mustEmbedUnimplementedCoreServiceServer()
 }
 
@@ -327,8 +503,23 @@ func (UnimplementedCoreServiceServer) GetAdditionById(context.Context, *CoreServ
 func (UnimplementedCoreServiceServer) GetDeductionById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeductionById not implemented")
 }
+func (UnimplementedCoreServiceServer) GetPayrollById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPayrollById not implemented")
+}
+func (UnimplementedCoreServiceServer) GetAttendanceById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAttendanceById not implemented")
+}
+func (UnimplementedCoreServiceServer) GetShiftById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetShiftById not implemented")
+}
 func (UnimplementedCoreServiceServer) SaveWorker(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveWorker not implemented")
+}
+func (UnimplementedCoreServiceServer) SaveMember(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveMember not implemented")
+}
+func (UnimplementedCoreServiceServer) SaveWorkerIdentityCard(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveWorkerIdentityCard not implemented")
 }
 func (UnimplementedCoreServiceServer) SaveOrganization(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveOrganization not implemented")
@@ -339,8 +530,29 @@ func (UnimplementedCoreServiceServer) SaveRole(context.Context, *CoreServiceRequ
 func (UnimplementedCoreServiceServer) SaveTeam(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveTeam not implemented")
 }
+func (UnimplementedCoreServiceServer) SaveCompensation(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveCompensation not implemented")
+}
+func (UnimplementedCoreServiceServer) SaveAddition(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveAddition not implemented")
+}
+func (UnimplementedCoreServiceServer) SaveDeduction(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveDeduction not implemented")
+}
+func (UnimplementedCoreServiceServer) SavePayroll(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SavePayroll not implemented")
+}
+func (UnimplementedCoreServiceServer) SaveAttendance(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveAttendance not implemented")
+}
+func (UnimplementedCoreServiceServer) SaveShift(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveShift not implemented")
+}
 func (UnimplementedCoreServiceServer) DeleteWorkerById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteWorkerById not implemented")
+}
+func (UnimplementedCoreServiceServer) DeleteWorkerIdentityCardById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteWorkerIdentityCardById not implemented")
 }
 func (UnimplementedCoreServiceServer) DeleteOrganizationById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteOrganizationById not implemented")
@@ -350,6 +562,18 @@ func (UnimplementedCoreServiceServer) DeleteRoleById(context.Context, *CoreServi
 }
 func (UnimplementedCoreServiceServer) DeleteTeamById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteTeamById not implemented")
+}
+func (UnimplementedCoreServiceServer) DeleteCompensationById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteCompensationById not implemented")
+}
+func (UnimplementedCoreServiceServer) DeleteAdditionById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAdditionById not implemented")
+}
+func (UnimplementedCoreServiceServer) DeleteDeductionById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDeductionById not implemented")
+}
+func (UnimplementedCoreServiceServer) DeleteShiftById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteShiftById not implemented")
 }
 func (UnimplementedCoreServiceServer) mustEmbedUnimplementedCoreServiceServer() {}
 
@@ -616,6 +840,60 @@ func _CoreService_GetDeductionById_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CoreService_GetPayrollById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).GetPayrollById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/getPayrollById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).GetPayrollById(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_GetAttendanceById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).GetAttendanceById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/getAttendanceById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).GetAttendanceById(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_GetShiftById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).GetShiftById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/getShiftById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).GetShiftById(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CoreService_SaveWorker_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CoreServiceRequest)
 	if err := dec(in); err != nil {
@@ -630,6 +908,42 @@ func _CoreService_SaveWorker_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CoreServiceServer).SaveWorker(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_SaveMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).SaveMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/saveMember",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).SaveMember(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_SaveWorkerIdentityCard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).SaveWorkerIdentityCard(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/saveWorkerIdentityCard",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).SaveWorkerIdentityCard(ctx, req.(*CoreServiceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -688,6 +1002,114 @@ func _CoreService_SaveTeam_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CoreService_SaveCompensation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).SaveCompensation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/saveCompensation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).SaveCompensation(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_SaveAddition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).SaveAddition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/saveAddition",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).SaveAddition(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_SaveDeduction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).SaveDeduction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/saveDeduction",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).SaveDeduction(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_SavePayroll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).SavePayroll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/savePayroll",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).SavePayroll(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_SaveAttendance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).SaveAttendance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/saveAttendance",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).SaveAttendance(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_SaveShift_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).SaveShift(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/saveShift",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).SaveShift(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CoreService_DeleteWorkerById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CoreServiceRequest)
 	if err := dec(in); err != nil {
@@ -702,6 +1124,24 @@ func _CoreService_DeleteWorkerById_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CoreServiceServer).DeleteWorkerById(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_DeleteWorkerIdentityCardById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).DeleteWorkerIdentityCardById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/deleteWorkerIdentityCardById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).DeleteWorkerIdentityCardById(ctx, req.(*CoreServiceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -756,6 +1196,78 @@ func _CoreService_DeleteTeamById_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CoreServiceServer).DeleteTeamById(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_DeleteCompensationById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).DeleteCompensationById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/deleteCompensationById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).DeleteCompensationById(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_DeleteAdditionById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).DeleteAdditionById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/deleteAdditionById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).DeleteAdditionById(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_DeleteDeductionById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).DeleteDeductionById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/deleteDeductionById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).DeleteDeductionById(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoreService_DeleteShiftById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).DeleteShiftById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/deleteShiftById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).DeleteShiftById(ctx, req.(*CoreServiceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -824,8 +1336,28 @@ var CoreService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CoreService_GetDeductionById_Handler,
 		},
 		{
+			MethodName: "getPayrollById",
+			Handler:    _CoreService_GetPayrollById_Handler,
+		},
+		{
+			MethodName: "getAttendanceById",
+			Handler:    _CoreService_GetAttendanceById_Handler,
+		},
+		{
+			MethodName: "getShiftById",
+			Handler:    _CoreService_GetShiftById_Handler,
+		},
+		{
 			MethodName: "saveWorker",
 			Handler:    _CoreService_SaveWorker_Handler,
+		},
+		{
+			MethodName: "saveMember",
+			Handler:    _CoreService_SaveMember_Handler,
+		},
+		{
+			MethodName: "saveWorkerIdentityCard",
+			Handler:    _CoreService_SaveWorkerIdentityCard_Handler,
 		},
 		{
 			MethodName: "saveOrganization",
@@ -840,8 +1372,36 @@ var CoreService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CoreService_SaveTeam_Handler,
 		},
 		{
+			MethodName: "saveCompensation",
+			Handler:    _CoreService_SaveCompensation_Handler,
+		},
+		{
+			MethodName: "saveAddition",
+			Handler:    _CoreService_SaveAddition_Handler,
+		},
+		{
+			MethodName: "saveDeduction",
+			Handler:    _CoreService_SaveDeduction_Handler,
+		},
+		{
+			MethodName: "savePayroll",
+			Handler:    _CoreService_SavePayroll_Handler,
+		},
+		{
+			MethodName: "saveAttendance",
+			Handler:    _CoreService_SaveAttendance_Handler,
+		},
+		{
+			MethodName: "saveShift",
+			Handler:    _CoreService_SaveShift_Handler,
+		},
+		{
 			MethodName: "deleteWorkerById",
 			Handler:    _CoreService_DeleteWorkerById_Handler,
+		},
+		{
+			MethodName: "deleteWorkerIdentityCardById",
+			Handler:    _CoreService_DeleteWorkerIdentityCardById_Handler,
 		},
 		{
 			MethodName: "deleteOrganizationById",
@@ -854,6 +1414,22 @@ var CoreService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "deleteTeamById",
 			Handler:    _CoreService_DeleteTeamById_Handler,
+		},
+		{
+			MethodName: "deleteCompensationById",
+			Handler:    _CoreService_DeleteCompensationById_Handler,
+		},
+		{
+			MethodName: "deleteAdditionById",
+			Handler:    _CoreService_DeleteAdditionById_Handler,
+		},
+		{
+			MethodName: "deleteDeductionById",
+			Handler:    _CoreService_DeleteDeductionById_Handler,
+		},
+		{
+			MethodName: "deleteShiftById",
+			Handler:    _CoreService_DeleteShiftById_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
