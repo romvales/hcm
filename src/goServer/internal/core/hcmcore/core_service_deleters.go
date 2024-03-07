@@ -137,7 +137,7 @@ func (srv *CoreServiceServer) DeletePayrollById(ctx _Context, req *_Request) (re
 
 func (srv *CoreServiceServer) DeleteShiftById(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.DeleteShiftById()"
-	var tableName = "shifts"
+	var tableName = "standardShifts"
 
 	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
 		return res, err
@@ -150,4 +150,10 @@ func (srv *CoreServiceServer) DeleteShiftById(ctx _Context, req *_Request) (res 
 	}
 
 	return srv.deleteItemById(ctx, req, _funcName, tableName)
+}
+
+func (srv *CoreServiceServer) DeleteAttendanceById(ctx _Context, req *_Request) (res *_Response, err error) {
+	var _funcName = "CoreServiceServer.DeleteAttendanceById()"
+
+	return srv.deleteItemById(ctx, req, _funcName, "attendances")
 }

@@ -59,6 +59,7 @@ type CoreServiceClient interface {
 	DeleteCompensationById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	DeleteAdditionById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	DeleteDeductionById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
+	DeleteAttendanceById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 	DeleteShiftById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error)
 }
 
@@ -403,6 +404,15 @@ func (c *coreServiceClient) DeleteDeductionById(ctx context.Context, in *CoreSer
 	return out, nil
 }
 
+func (c *coreServiceClient) DeleteAttendanceById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
+	out := new(CoreServiceResponse)
+	err := c.cc.Invoke(ctx, "/entities.CoreService/deleteAttendanceById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *coreServiceClient) DeleteShiftById(ctx context.Context, in *CoreServiceRequest, opts ...grpc.CallOption) (*CoreServiceResponse, error) {
 	out := new(CoreServiceResponse)
 	err := c.cc.Invoke(ctx, "/entities.CoreService/deleteShiftById", in, out, opts...)
@@ -453,6 +463,7 @@ type CoreServiceServer interface {
 	DeleteCompensationById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	DeleteAdditionById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	DeleteDeductionById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
+	DeleteAttendanceById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	DeleteShiftById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error)
 	mustEmbedUnimplementedCoreServiceServer()
 }
@@ -571,6 +582,9 @@ func (UnimplementedCoreServiceServer) DeleteAdditionById(context.Context, *CoreS
 }
 func (UnimplementedCoreServiceServer) DeleteDeductionById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteDeductionById not implemented")
+}
+func (UnimplementedCoreServiceServer) DeleteAttendanceById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAttendanceById not implemented")
 }
 func (UnimplementedCoreServiceServer) DeleteShiftById(context.Context, *CoreServiceRequest) (*CoreServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteShiftById not implemented")
@@ -1254,6 +1268,24 @@ func _CoreService_DeleteDeductionById_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CoreService_DeleteAttendanceById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CoreServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServiceServer).DeleteAttendanceById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/entities.CoreService/deleteAttendanceById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServiceServer).DeleteAttendanceById(ctx, req.(*CoreServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CoreService_DeleteShiftById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CoreServiceRequest)
 	if err := dec(in); err != nil {
@@ -1426,6 +1458,10 @@ var CoreService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "deleteDeductionById",
 			Handler:    _CoreService_DeleteDeductionById_Handler,
+		},
+		{
+			MethodName: "deleteAttendanceById",
+			Handler:    _CoreService_DeleteAttendanceById_Handler,
 		},
 		{
 			MethodName: "deleteShiftById",

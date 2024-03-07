@@ -4,7 +4,7 @@ go 1.21.7
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/jaswdr/faker v1.19.1
+	github.com/jaswdr/faker/v2 v2.1.0
 	github.com/nedpals/supabase-go v0.4.0
 	github.com/relvacode/iso8601 v1.4.0
 	github.com/stretchr/testify v1.9.0

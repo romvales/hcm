@@ -2,6 +2,7 @@ package hcmcore
 
 import (
 	"context"
+	"errors"
 	"goServer/internal/apiClient"
 	"goServer/internal/core/pb"
 	goServerErrors "goServer/internal/errors"
@@ -43,6 +44,17 @@ func checkRequestForMissingParameters(req any, errMsg string) (*_Response, error
 	return nil, nil
 }
 
+func checkIfRequestTargetIsMissing(_funcName string, target any) (*_Response, error) {
+	if res, err := checkRequestForMissingParameters(
+		target,
+		messages.MessageNoTargetProvided(_funcName),
+	); err != nil {
+		return res, err
+	}
+
+	return nil, nil
+}
+
 func getParameterExpectedId(columns []string, params map[string]any) (columnToSearch string, id string) {
 	patt := regexp.MustCompile("(userId|uuid)")
 
@@ -50,6 +62,18 @@ func getParameterExpectedId(columns []string, params map[string]any) (columnToSe
 		id = *params[columnToSearch].(*string)
 	} else {
 		id = strconv.FormatInt(*params[columnToSearch].(*int64), 10)
+	}
+
+	return
+}
+
+func getParameterExpectedFromContext(ctx _Context) (columnToSearch string, id string) {
+	if columnName, ok := ctx.Value(GetterContextKey("columnToSearch")).(string); ok {
+		columnToSearch = columnName
+	}
+
+	if value, ok := ctx.Value(GetterContextKey("id")).(string); ok {
+		id = value
 	}
 
 	return
@@ -84,6 +108,17 @@ func checkIfHasValidRequestParams(_funcName string, req *_Request, _type string)
 	return nil, nil
 }
 
+func setupClientErrorResponse(passedError error) (res *_Response, err error) {
+	errMsg := passedError.Error()
+
+	return &_Response{
+		Code: pb.CoreServiceResponse_C_MISSINGPARAMETERS,
+		GetterResponse: &pb.GetterResponse{
+			ErrorMessage: &errMsg,
+		},
+	}, passedError
+}
+
 func (srv *CoreServiceServer) dependencies(req *_Request) (
 	*supabase.Client,
 	*supabaseCommunityGo.Client,
@@ -106,4 +141,15 @@ func (srv *CoreServiceServer) countEmptyParameters(params map[string]any) (nonEm
 	}
 
 	return
+}
+
+func (srv *CoreServiceServer) someRequiredFieldAreNotProvided(_funcName, fields string) (*_Response, error) {
+	errMsg := messages.MessageRequiredFieldNotProvided(_funcName, fields)
+
+	return &_Response{
+		Code: pb.CoreServiceResponse_C_MISSINGPARAMETERS,
+		SetterResponse: &pb.SetterResponse{
+			ErrorMessage: &errMsg,
+		},
+	}, errors.New(errMsg)
 }

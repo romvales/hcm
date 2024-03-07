@@ -20,7 +20,7 @@ dev:
 
 test:
 	@make clean
-	@cd ${GODIR} && go test -v ./internal/core/hcmcore/...
+	@cd ${GODIR} && go clean -testcache && go test -count=1 -v ./internal/core/hcmcore/...
 
 clean:
 	@cd ${GODIR} && [ -e ./main ] && rm ./main || echo &> /dev/null;

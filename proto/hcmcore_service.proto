@@ -51,8 +51,9 @@ service CoreService {
   rpc deleteCompensationById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc deleteAdditionById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc deleteDeductionById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc deleteAttendanceById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc deleteShiftById(CoreServiceRequest) returns (CoreServiceResponse);
-
+  
 }
 
 //
@@ -96,13 +97,34 @@ message GetterRequest {
   optional int64 targetId = 1;
   optional string targetUuid = 2;
   optional string userId = 3;
+
+  optional SetterRequest.ShiftOpType targetShiftType = 4;
 }
 
 //
 //
 //
 message GetterResponse {
-  optional string errorMessage = 10;
+
+  optional string errorMessage = 1;
+
+  optional SetterRequest.ShiftOpType targetShiftType = 4;
+  
+  optional Worker workerResult = 5;
+  optional Organization organizationResult = 6;
+  optional Role roleResult = 7;
+  optional Team teamResult = 8;
+  optional WorkerIdentityCard identityCardResult = 9;
+  optional Member memberResult = 10;
+  optional Compensation compensationResult = 11;
+  optional Addition additionResult = 12;
+  optional Deduction deductionResult = 13;
+  optional Payroll payrollResult = 14;
+  optional Attendance attendanceResult = 15;
+  optional Shift shiftResult = 16;
+  optional OverrideShift overrideShiftResult = 17;
+
+  
 }
 
 //
@@ -162,5 +184,7 @@ message SetterResponse {
   optional Attendance updatedAttendanceTarget = 18;
   optional Shift updatedShiftTarget = 19;
   optional OverrideShift updatedOverrideShiftTarget = 20;
+  
   optional SetterRequest.ShiftOpType targetShiftType = 21;
+
 }

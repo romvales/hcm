@@ -14,6 +14,8 @@ func ConvertMapToShiftProto(mp *Shift) *pb.Shift {
 		Day:            pb.ShiftDay(mp.Day),
 		ClockIn:        convertIso8601ToTimestamppb(mp.ClockIn),
 		ClockOut:       convertIso8601ToTimestamppb(mp.ClockOut),
+		Flags:          mp.Flags,
+		Uuid:           mp.Uuid,
 	}
 
 	return result

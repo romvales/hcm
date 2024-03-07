@@ -1,10 +1,8 @@
 package hcmcore
 
 import (
-	"errors"
 	"goServer/internal/core/converters"
 	"goServer/internal/core/pb"
-	"goServer/internal/messages"
 	"reflect"
 	"time"
 
@@ -39,7 +37,11 @@ func (srv *CoreServiceServer) saveUpsertDataToTable(
 		uuidField := ref.Elem().FieldByName("Uuid")
 
 		// When the uuid column is empty, make sure to set a uuid for it.
-		if uuidField.IsZero() {
+		// It is assumed that when the uuid column is empty, it is a new data.
+		if uuidField.CanSet() && uuidField.IsZero() {
+			createdAt := ref.Elem().FieldByName("CreatedAt")
+			createdAt.SetString(time.Now().UTC().Format(time.RFC3339Nano))
+
 			uuidField.SetString(uuid.NewString())
 		}
 
@@ -81,14 +83,13 @@ func (srv *CoreServiceServer) SaveWorker(ctx _Context, req *_Request) (res *_Res
 	}
 
 	saveReq := req.SetterRequest
+	workerTarget := saveReq.WorkerTarget
 
-	if res, err := checkRequestForMissingParameters(
-		saveReq.WorkerTarget, messages.MessageNoTargetProvided(_funcName),
-	); err != nil {
+	if res, err := checkIfRequestTargetIsMissing(_funcName, workerTarget); err != nil {
 		return res, err
 	}
 
-	target := (&converters.Worker{}).TranslatePb(saveReq.WorkerTarget)
+	target := (&converters.Worker{}).TranslatePb(workerTarget)
 	resp := &converters.Worker{}
 
 	if res, err := srv.saveUpsertDataToTable(req, target, resp, "workers"); err != nil {
@@ -111,15 +112,13 @@ func (srv *CoreServiceServer) SaveOrganization(ctx _Context, req *_Request) (res
 	}
 
 	saveReq := req.SetterRequest
+	organizationTarget := saveReq.OrganizationTarget
 
-	if res, err := checkRequestForMissingParameters(
-		saveReq.OrganizationTarget,
-		messages.MessageNoTargetProvided(_funcName),
-	); err != nil {
+	if res, err := checkIfRequestTargetIsMissing(_funcName, organizationTarget); err != nil {
 		return res, err
 	}
 
-	target := (&converters.Organization{}).TranslatePb(req.SetterRequest.OrganizationTarget)
+	target := (&converters.Organization{}).TranslatePb(organizationTarget)
 	resp := &converters.Organization{}
 
 	if res, err := srv.saveUpsertDataToTable(req, target, resp, "organizations"); err != nil {
@@ -142,22 +141,14 @@ func (srv *CoreServiceServer) SaveRole(ctx _Context, req *_Request) (res *_Respo
 	}
 
 	saveReq := req.SetterRequest
+	roleTarget := saveReq.RoleTarget
 
-	if res, err := checkRequestForMissingParameters(
-		saveReq.RoleTarget,
-		messages.MessageNoTargetProvided(_funcName),
-	); err != nil {
+	if res, err := checkIfRequestTargetIsMissing(_funcName, roleTarget); err != nil {
 		return res, err
 	}
 
 	if saveReq.RoleTarget.GetOrganizationId() == 0 {
-		errMsg := messages.MessageRequiredFieldNotProvided(_funcName, "organizationId")
-
-		return &_Response{
-			SetterResponse: &pb.SetterResponse{
-				ErrorMessage: &errMsg,
-			},
-		}, errors.New(errMsg)
+		return srv.someRequiredFieldAreNotProvided(_funcName, "organizationId")
 	}
 
 	target := (&converters.Role{}).TranslatePb(req.SetterRequest.RoleTarget)
@@ -183,26 +174,17 @@ func (srv *CoreServiceServer) SaveTeam(ctx _Context, req *_Request) (res *_Respo
 	}
 
 	saveReq := req.SetterRequest
+	teamTarget := saveReq.TeamTarget
 
-	if res, err := checkRequestForMissingParameters(
-		saveReq.TeamTarget,
-		messages.MessageNoTargetProvided(_funcName),
-	); err != nil {
+	if res, err := checkIfRequestTargetIsMissing(_funcName, teamTarget); err != nil {
 		return res, err
 	}
 
 	if saveReq.TeamTarget.GetOrganizationId() == 0 {
-		errMsg := messages.MessageRequiredFieldNotProvided(_funcName, "organizationId")
-
-		return &_Response{
-			Code: pb.CoreServiceResponse_C_MISSINGPARAMETERS,
-			SetterResponse: &pb.SetterResponse{
-				ErrorMessage: &errMsg,
-			},
-		}, errors.New(errMsg)
+		return srv.someRequiredFieldAreNotProvided(_funcName, "organizationId")
 	}
 
-	target := (&converters.Team{}).TranslatePb(saveReq.TeamTarget)
+	target := (&converters.Team{}).TranslatePb(teamTarget)
 	resp := &converters.Team{}
 
 	if res, err := srv.saveUpsertDataToTable(req, target, resp, "teams"); err != nil {
@@ -217,7 +199,7 @@ func (srv *CoreServiceServer) SaveTeam(ctx _Context, req *_Request) (res *_Respo
 	}, nil
 }
 
-func (srv *CoreServiceServer) SaveWorkerIdentityCard(cx _Context, req *_Request) (res *_Response, err error) {
+func (srv *CoreServiceServer) SaveWorkerIdentityCard(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveWorkerIdentityCard()"
 
 	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
@@ -226,35 +208,18 @@ func (srv *CoreServiceServer) SaveWorkerIdentityCard(cx _Context, req *_Request)
 
 	saveReq := req.SetterRequest
 
-	if res, err := checkRequestForMissingParameters(
-		saveReq.IdentityCardTarget,
-		messages.MessageNoTargetProvided(_funcName),
-	); err != nil {
+	idTarget := saveReq.IdentityCardTarget
+
+	if res, err := checkIfRequestTargetIsMissing(_funcName, idTarget); err != nil {
 		return res, err
 	}
 
-	idTarget := saveReq.IdentityCardTarget
-
 	if idTarget.GetWorkerId() == 0 {
-		errMsg := messages.MessageRequiredFieldNotProvided(_funcName, "workerId")
-
-		return &_Response{
-			Code: pb.CoreServiceResponse_C_MISSINGPARAMETERS,
-			SetterResponse: &pb.SetterResponse{
-				ErrorMessage: &errMsg,
-			},
-		}, errors.New(errMsg)
+		return srv.someRequiredFieldAreNotProvided(_funcName, "workerId")
 	}
 
 	if idTarget.GetFrontImageUrl() == "" && idTarget.GetBackImageUrl() == "" {
-		errMsg := messages.MessageRequiredFieldNotProvided(_funcName, "frontImageUrl, backImageUrl")
-
-		return &_Response{
-			Code: pb.CoreServiceResponse_C_MISSINGPARAMETERS,
-			SetterResponse: &pb.SetterResponse{
-				ErrorMessage: &errMsg,
-			},
-		}, errors.New(errMsg)
+		return srv.someRequiredFieldAreNotProvided(_funcName, "frontImageUrl, backImageUrl")
 	}
 
 	target := (&converters.WorkerIdentityCard{}).TranslatePb(idTarget)
@@ -272,7 +237,7 @@ func (srv *CoreServiceServer) SaveWorkerIdentityCard(cx _Context, req *_Request)
 	}, nil
 }
 
-func (srv *CoreServiceServer) SaveMember(cx _Context, req *_Request) (res *_Response, err error) {
+func (srv *CoreServiceServer) SaveMember(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveMember()"
 
 	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
@@ -280,15 +245,17 @@ func (srv *CoreServiceServer) SaveMember(cx _Context, req *_Request) (res *_Resp
 	}
 
 	saveReq := req.SetterRequest
+	memberTarget := saveReq.MemberTarget
 
-	if res, err := checkRequestForMissingParameters(
-		saveReq.MemberTarget,
-		messages.MessageNoTargetProvided(_funcName),
-	); err != nil {
+	if res, err := checkIfRequestTargetIsMissing(_funcName, memberTarget); err != nil {
 		return res, err
 	}
 
-	target := (&converters.Member{}).TranslatePb(saveReq.MemberTarget)
+	if memberTarget.GetOrganizationId() == 0 || memberTarget.GetWorkerId() == 0 {
+		return srv.someRequiredFieldAreNotProvided(_funcName, "organizationId, workerId")
+	}
+
+	target := (&converters.Member{}).TranslatePb(memberTarget)
 	resp := &converters.Member{}
 
 	if res, err := srv.saveUpsertDataToTable(req, target, resp, "organizationsMembers"); err != nil {
@@ -303,7 +270,7 @@ func (srv *CoreServiceServer) SaveMember(cx _Context, req *_Request) (res *_Resp
 	}, nil
 }
 
-func (srv *CoreServiceServer) SaveCompensation(cx _Context, req *_Request) (res *_Response, err error) {
+func (srv *CoreServiceServer) SaveCompensation(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveCompensation()"
 
 	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
@@ -311,15 +278,17 @@ func (srv *CoreServiceServer) SaveCompensation(cx _Context, req *_Request) (res 
 	}
 
 	saveReq := req.SetterRequest
+	compensationTarget := saveReq.CompensationTarget
 
-	if res, err := checkRequestForMissingParameters(
-		saveReq.CompensationTarget,
-		messages.MessageNoTargetProvided(_funcName),
-	); err != nil {
+	if res, err := checkIfRequestTargetIsMissing(_funcName, compensationTarget); err != nil {
 		return res, err
 	}
 
-	target := (&converters.Compensation{}).TranslatePb(saveReq.CompensationTarget)
+	if compensationTarget.GetOrganizationId() == 0 || compensationTarget.GetWorkerId() == 0 {
+		return srv.someRequiredFieldAreNotProvided(_funcName, "organizationId, workerId")
+	}
+
+	target := (&converters.Compensation{}).TranslatePb(compensationTarget)
 	resp := &converters.Compensation{}
 
 	if res, err := srv.saveUpsertDataToTable(req, target, resp, "compensations"); err != nil {
@@ -327,12 +296,14 @@ func (srv *CoreServiceServer) SaveCompensation(cx _Context, req *_Request) (res 
 	}
 
 	return &_Response{
-		Code:           pb.CoreServiceResponse_C_NOERROR,
-		SetterResponse: &pb.SetterResponse{},
+		Code: pb.CoreServiceResponse_C_NOERROR,
+		SetterResponse: &pb.SetterResponse{
+			UpdatedCompensationTarget: converters.ConvertMapToCompensationProto(resp),
+		},
 	}, nil
 }
 
-func (srv *CoreServiceServer) SaveAddition(cx _Context, req *_Request) (res *_Response, err error) {
+func (srv *CoreServiceServer) SaveAddition(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveAddition()"
 
 	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
@@ -340,15 +311,13 @@ func (srv *CoreServiceServer) SaveAddition(cx _Context, req *_Request) (res *_Re
 	}
 
 	saveReq := req.SetterRequest
+	additionTarget := saveReq.AdditionTarget
 
-	if res, err := checkRequestForMissingParameters(
-		saveReq.AdditionTarget,
-		messages.MessageNoTargetProvided(_funcName),
-	); err != nil {
+	if res, err := checkIfRequestTargetIsMissing(_funcName, additionTarget); err != nil {
 		return res, err
 	}
 
-	target := (&converters.Addition{}).TranslatePb(saveReq.AdditionTarget)
+	target := (&converters.Addition{}).TranslatePb(additionTarget)
 	resp := &converters.Addition{}
 
 	if res, err := srv.saveUpsertDataToTable(req, target, resp, "additions"); err != nil {
@@ -356,12 +325,14 @@ func (srv *CoreServiceServer) SaveAddition(cx _Context, req *_Request) (res *_Re
 	}
 
 	return &_Response{
-		Code:           pb.CoreServiceResponse_C_NOERROR,
-		SetterResponse: &pb.SetterResponse{},
+		Code: pb.CoreServiceResponse_C_NOERROR,
+		SetterResponse: &pb.SetterResponse{
+			UpdatedAdditionTarget: converters.ConvertMapToAdditionProto(resp),
+		},
 	}, nil
 }
 
-func (srv *CoreServiceServer) SaveDeduction(cx _Context, req *_Request) (res *_Response, err error) {
+func (srv *CoreServiceServer) SaveDeduction(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveDeduction()"
 
 	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
@@ -369,15 +340,13 @@ func (srv *CoreServiceServer) SaveDeduction(cx _Context, req *_Request) (res *_R
 	}
 
 	saveReq := req.SetterRequest
+	deductionTarget := saveReq.DeductionTarget
 
-	if res, err := checkRequestForMissingParameters(
-		saveReq.DeductionTarget,
-		messages.MessageNoTargetProvided(_funcName),
-	); err != nil {
+	if res, err := checkIfRequestTargetIsMissing(_funcName, deductionTarget); err != nil {
 		return res, err
 	}
 
-	target := (&converters.Deduction{}).TranslatePb(saveReq.DeductionTarget)
+	target := (&converters.Deduction{}).TranslatePb(deductionTarget)
 	resp := &converters.Deduction{}
 
 	if res, err := srv.saveUpsertDataToTable(req, target, resp, "deductions"); err != nil {
@@ -385,12 +354,14 @@ func (srv *CoreServiceServer) SaveDeduction(cx _Context, req *_Request) (res *_R
 	}
 
 	return &_Response{
-		Code:           pb.CoreServiceResponse_C_NOERROR,
-		SetterResponse: &pb.SetterResponse{},
+		Code: pb.CoreServiceResponse_C_NOERROR,
+		SetterResponse: &pb.SetterResponse{
+			UpdatedDeductionTarget: converters.ConvertMapToDeductionProto(resp),
+		},
 	}, nil
 }
 
-func (srv *CoreServiceServer) SavePayroll(cx _Context, req *_Request) (res *_Response, err error) {
+func (srv *CoreServiceServer) SavePayroll(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SavePayroll()"
 
 	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
@@ -398,15 +369,17 @@ func (srv *CoreServiceServer) SavePayroll(cx _Context, req *_Request) (res *_Res
 	}
 
 	saveReq := req.SetterRequest
+	payrollTarget := saveReq.PayrollTarget
 
-	if res, err := checkRequestForMissingParameters(
-		saveReq.PayrollTarget,
-		messages.MessageNoTargetProvided(_funcName),
-	); err != nil {
+	if res, err := checkIfRequestTargetIsMissing(_funcName, payrollTarget); err != nil {
 		return res, err
 	}
 
-	target := (&converters.Payroll{}).TranslatePb(saveReq.PayrollTarget)
+	if payrollTarget.GetOrganizationId() == 0 {
+		return srv.someRequiredFieldAreNotProvided(_funcName, "organizationId")
+	}
+
+	target := (&converters.Payroll{}).TranslatePb(payrollTarget)
 	resp := &converters.Payroll{}
 
 	if res, err := srv.saveUpsertDataToTable(req, target, resp, "payrolls"); err != nil {
@@ -414,12 +387,50 @@ func (srv *CoreServiceServer) SavePayroll(cx _Context, req *_Request) (res *_Res
 	}
 
 	return &_Response{
-		Code:           pb.CoreServiceResponse_C_NOERROR,
-		SetterResponse: &pb.SetterResponse{},
+		Code: pb.CoreServiceResponse_C_NOERROR,
+		SetterResponse: &pb.SetterResponse{
+			UpdatedPayrollTarget: converters.ConvertMapToPayrollProto(resp),
+		},
 	}, nil
 }
 
-func (srv *CoreServiceServer) SaveShift(cx _Context, req *_Request) (res *_Response, err error) {
+func (srv *CoreServiceServer) SaveAttendance(ctx _Context, req *_Request) (res *_Response, err error) {
+	var _funcName = "CoreServiceServer.SaveAttendance()"
+
+	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+		return res, err
+	}
+
+	saveReq := req.SetterRequest
+	attendanceTarget := saveReq.AttendanceTarget
+
+	if res, err := checkIfRequestTargetIsMissing(_funcName, attendanceTarget); err != nil {
+		return res, err
+	}
+
+	if attendanceTarget.GetWorkerId() == 0 &&
+		(attendanceTarget.ShiftId == nil || attendanceTarget.OshiftId == nil) &&
+		attendanceTarget.ClockIn == nil {
+		return srv.someRequiredFieldAreNotProvided(_funcName, "workerId, shiftId|oshiftId, clockIn")
+	}
+
+	target := (&converters.Attendance{}).TranslatePb(attendanceTarget)
+	resp := &converters.Attendance{}
+
+	res, err = srv.saveUpsertDataToTable(req, target, resp, "attendances")
+	if err != nil {
+		return
+	}
+
+	return &_Response{
+		Code: pb.CoreServiceResponse_C_NOERROR,
+		SetterResponse: &pb.SetterResponse{
+			UpdatedAttendanceTarget: converters.ConvertMapToAttendanceProto(resp),
+		},
+	}, nil
+}
+
+func (srv *CoreServiceServer) SaveShift(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveShift()"
 
 	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
@@ -428,15 +439,29 @@ func (srv *CoreServiceServer) SaveShift(cx _Context, req *_Request) (res *_Respo
 
 	saveReq := req.SetterRequest
 
-	if res, err := checkRequestForMissingParameters(
-		saveReq.ShiftTarget,
-		messages.MessageNoTargetProvided(_funcName),
-	); err != nil {
+	if res, err := checkIfRequestTargetIsMissing(_funcName, saveReq); err != nil {
 		return res, err
 	}
 
 	if saveReq.GetTargetShiftType() == pb.SetterRequest_T_OVERRIDESHIFT {
-		target := (&converters.OverrideShift{}).TranslatePb(saveReq.OverrideShiftTarget)
+		overrideShiftTarget := saveReq.OverrideShiftTarget
+
+		if res, err := checkIfRequestTargetIsMissing(_funcName, overrideShiftTarget); err != nil {
+			return res, err
+		}
+
+		if overrideShiftTarget.GetOverrideClockIn() == nil ||
+			overrideShiftTarget.GetOverrideClockOut() == nil ||
+			overrideShiftTarget.GetOrganizationId() == 0 {
+			return srv.someRequiredFieldAreNotProvided(_funcName, "organizationId, overrideClockIn, overrideClockOut")
+		}
+
+		if overrideShiftTarget.GetName() == "" ||
+			overrideShiftTarget.GetGroupId() == "" {
+			return srv.someRequiredFieldAreNotProvided(_funcName, "name, groupId")
+		}
+
+		target := (&converters.OverrideShift{}).TranslatePb(overrideShiftTarget)
 		resp := &converters.OverrideShift{}
 
 		res, err = srv.saveUpsertDataToTable(req, target, resp, "overrideShifts")
@@ -451,10 +476,26 @@ func (srv *CoreServiceServer) SaveShift(cx _Context, req *_Request) (res *_Respo
 			},
 		}, nil
 	} else {
-		target := (&converters.Shift{}).TranslatePb(saveReq.ShiftTarget)
+		shiftTarget := saveReq.ShiftTarget
+
+		if res, err := checkIfRequestTargetIsMissing(_funcName, shiftTarget); err != nil {
+			return res, err
+		}
+
+		if shiftTarget.GetClockIn() == nil ||
+			shiftTarget.GetClockOut() == nil ||
+			shiftTarget.GetOrganizationId() == 0 {
+			return srv.someRequiredFieldAreNotProvided(_funcName, "organizationId, clockIn, clockOut")
+		}
+
+		if shiftTarget.GetName() == "" {
+			return srv.someRequiredFieldAreNotProvided(_funcName, "name")
+		}
+
+		target := (&converters.Shift{}).TranslatePb(shiftTarget)
 		resp := &converters.Shift{}
 
-		res, err = srv.saveUpsertDataToTable(req, target, resp, "shifts")
+		res, err = srv.saveUpsertDataToTable(req, target, resp, "standardShifts")
 		if err != nil {
 			return
 		}

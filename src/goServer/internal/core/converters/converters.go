@@ -1,10 +1,14 @@
 package converters
 
 import (
+	"fmt"
 	"goServer/internal/core/pb"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/relvacode/iso8601"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -14,7 +18,13 @@ func convertIso8601ToTimestamppb(val any) *timestamppb.Timestamp {
 		return nil
 	}
 
-	ts, err := iso8601.ParseString(val.(string))
+	timeStr := val.(string)
+
+	if len(timeStr) == 0 {
+		return nil
+	}
+
+	ts, err := iso8601.ParseString(timeStr)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -225,6 +235,8 @@ type Shift struct {
 	Day            int32  `json:"day,omitempty"` // Assuming ShiftDay is an int32 enum
 	ClockIn        string `json:"clockIn,omitempty"`
 	ClockOut       string `json:"clockOut,omitempty"`
+	Flags          uint32 `json:"flags,omitempty"`
+	Uuid           string `json:"uuid,omitempty"`
 }
 
 func (s *Shift) TranslatePb(pb *pb.Shift) *Shift {
@@ -407,6 +419,7 @@ type Organization struct {
 	Industry         int32   `json:"industry,omitempty"`
 	OverrideIndustry *string `json:"overrideIndustry,omitempty"`
 	Name             string  `json:"name,omitempty"`
+	Username         string  `json:"username,omitempty"`
 	Flags            uint32  `json:"flags,omitempty"`
 	Uuid             string  `json:"uuid,omitempty"`
 }
@@ -424,6 +437,13 @@ func (o *Organization) TranslatePb(pb *pb.Organization) *Organization {
 
 	if pb.LastUpdatedAt != nil {
 		o.LastUpdatedAt = pb.LastUpdatedAt.AsTime().Format(time.RFC3339Nano)
+	}
+
+	// Whenever the pb.Username field is empty, generate a random uuid as its new username.
+	if pb.GetUsername() == "" {
+		uuidStr := strings.ReplaceAll(uuid.NewString(), "-", "")[0:16]
+		id, _ := strconv.ParseUint(uuidStr, 16, 64)
+		o.Username = fmt.Sprintf("%d", id)
 	}
 
 	return o
@@ -566,26 +586,30 @@ func (w *Deduction) TranslatePb(pb *pb.Deduction) *Deduction {
 }
 
 type Compensation struct {
-	Id            int64   `json:"id,omitempty"`
-	CreatedById   *int64  `json:"createdById,omitempty"`
-	UpdatedById   *int64  `json:"updatedById,omitempty"`
-	CreatedAt     string  `json:"createdAt,omitempty"`
-	LastUpdatedAt string  `json:"lastUpdatedAt,omitempty"`
-	PaidAt        string  `json:"paidAt,omitempty"`
-	ApprovedAt    string  `json:"approvedAt,omitempty"`
-	RejectedAt    string  `json:"rejectedAt,omitempty"`
-	PeriodStart   string  `json:"periodStart,omitempty"`
-	PeriodEnd     string  `json:"periodEnd,omitempty"`
-	Gvalue        float32 `json:"gvalue,omitempty"`
-	Avalue        float32 `json:"avalue,omitempty"`
-	Dvalue        float32 `json:"dvalue,omitempty"`
-	Value         float32 `json:"value,omitempty"`
-	Flags         uint32  `json:"flags,omitempty"`
-	Uuid          string  `json:"uuid,omitempty"`
+	Id             int64   `json:"id,omitempty"`
+	OrganizationId int64   `json:"organizationId,omitempty"`
+	WorkerId       int64   `json:"workerId,omitempty"`
+	CreatedById    *int64  `json:"createdById,omitempty"`
+	UpdatedById    *int64  `json:"updatedById,omitempty"`
+	CreatedAt      string  `json:"createdAt,omitempty"`
+	LastUpdatedAt  string  `json:"lastUpdatedAt,omitempty"`
+	PaidAt         string  `json:"paidAt,omitempty"`
+	ApprovedAt     string  `json:"approvedAt,omitempty"`
+	RejectedAt     string  `json:"rejectedAt,omitempty"`
+	PeriodStart    string  `json:"periodStart,omitempty"`
+	PeriodEnd      string  `json:"periodEnd,omitempty"`
+	Gvalue         float32 `json:"gvalue,omitempty"`
+	Avalue         float32 `json:"avalue,omitempty"`
+	Dvalue         float32 `json:"dvalue,omitempty"`
+	Value          float32 `json:"value,omitempty"`
+	Flags          uint32  `json:"flags,omitempty"`
+	Uuid           string  `json:"uuid,omitempty"`
 }
 
 func (c *Compensation) TranslatePb(pb *pb.Compensation) *Compensation {
 	c.Id = pb.Id
+	c.OrganizationId = pb.OrganizationId
+	c.WorkerId = pb.WorkerId
 	c.CreatedById = pb.CreatedById
 	c.UpdatedById = pb.UpdatedById
 	c.CreatedAt = pb.CreatedAt.AsTime().Format(time.RFC3339Nano)
@@ -672,9 +696,9 @@ func (a *Attendance) TranslatePb(pb *pb.Attendance) *Attendance {
 	a.OshiftId = pb.OshiftId
 	a.CreatedById = pb.CreatedById
 	a.UpdatedById = pb.UpdatedById
-	a.CreatedAt = pb.CreatedAt.AsTime().String()
-	a.ClockIn = pb.ClockIn.AsTime().String()
-	a.ClockOut = pb.ClockOut.AsTime().String()
+	a.CreatedAt = pb.CreatedAt.AsTime().Format(time.RFC3339Nano)
+	a.ClockIn = pb.ClockIn.AsTime().Format(time.RFC3339Nano)
+	a.ClockOut = pb.ClockOut.AsTime().Format(time.RFC3339Nano)
 	a.Computed = pb.Computed
 	a.UnderTime = pb.UnderTime
 	a.OverTime = pb.OverTime
@@ -687,17 +711,17 @@ func (a *Attendance) TranslatePb(pb *pb.Attendance) *Attendance {
 }
 
 type Addition struct {
-	Id            int64
-	CreatedById   *int64
-	UpdatedByid   *int64
-	WorkerId      *int64
-	CreatedAt     string
-	LastUpdatedAt string
-	EffectiveAt   string
-	Name          string
-	Value         float32
-	Flags         uint32
-	Uuid          string
+	Id            int64   `json:"id"`
+	CreatedById   *int64  `json:"createdById,omitempty"`
+	UpdatedByid   *int64  `json:"updatedByid,omitempty"`
+	WorkerId      *int64  `json:"workerId,omitempty"`
+	CreatedAt     string  `json:"createdAt,omitempty"`
+	LastUpdatedAt string  `json:"lastUpdatedAt,omitempty"`
+	EffectiveAt   string  `json:"effectiveAt,omitempty"`
+	Name          string  `json:"name,omitempty"`
+	Value         float32 `json:"value,omitempty"`
+	Flags         uint32  `json:"flags,omitempty"`
+	Uuid          string  `json:"uuid,omitempty"`
 }
 
 func (a *Addition) TranslatePb(pb *pb.Addition) *Addition {
@@ -705,7 +729,7 @@ func (a *Addition) TranslatePb(pb *pb.Addition) *Addition {
 	a.CreatedById = pb.CreatedById
 	a.UpdatedByid = pb.UpdatedByid
 	a.WorkerId = pb.WorkerId
-	a.CreatedAt = pb.CreatedAt.AsTime().String()
+	a.CreatedAt = pb.CreatedAt.AsTime().Format(time.RFC3339Nano)
 	a.Name = pb.Name
 	a.Value = pb.Value
 	a.Flags = pb.Flags
