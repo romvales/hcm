@@ -29,7 +29,7 @@ func NewCoreServiceServer() *CoreServiceServer {
 }
 
 func checkRequestForMissingParameters(req any, errMsg string) (*_Response, error) {
-	if req == nil {
+	constructResponse := func() (*_Response, error) {
 		err := goServerErrors.ErrMissingRequestParameter(errMsg)
 		msg := err.Error()
 
@@ -39,6 +39,14 @@ func checkRequestForMissingParameters(req any, errMsg string) (*_Response, error
 				ErrorMessage: &msg,
 			},
 		}, err
+	}
+
+	if req == nil {
+		return constructResponse()
+	}
+
+	if reflect.ValueOf(req).IsNil() {
+		return constructResponse()
 	}
 
 	return nil, nil
@@ -89,16 +97,20 @@ func checkIfHasValidRequestParams(_funcName string, req *_Request, _type string)
 
 	switch _type {
 	case "getter":
+		getterReq := req.GetterRequest
+
 		if res, err := checkRequestForMissingParameters(
-			req.GetterRequest,
+			getterReq,
 			messages.MessageNoRequestBodyProvided(_funcName),
 		); err != nil {
 			return res, err
 		}
 
 	case "setter":
+		setterReq := req.SetterRequest
+
 		if res, err := checkRequestForMissingParameters(
-			req.SetterRequest,
+			setterReq,
 			messages.MessageNoRequestBodyProvided(_funcName),
 		); err != nil {
 			return res, err
@@ -108,15 +120,27 @@ func checkIfHasValidRequestParams(_funcName string, req *_Request, _type string)
 	return nil, nil
 }
 
-func setupClientErrorResponse(passedError error) (res *_Response, err error) {
+func setupErrorResponse(passedError error, code pb.CoreServiceResponse_CoreServiceResponseCode, typ string) (res *_Response, err error) {
 	errMsg := passedError.Error()
 
-	return &_Response{
-		Code: pb.CoreServiceResponse_C_MISSINGPARAMETERS,
-		GetterResponse: &pb.GetterResponse{
-			ErrorMessage: &errMsg,
-		},
-	}, passedError
+	switch typ {
+	case "getter":
+		return &_Response{
+			Code: code,
+			GetterResponse: &pb.GetterResponse{
+				ErrorMessage: &errMsg,
+			},
+		}, passedError
+	case "setter":
+		return &_Response{
+			Code: code,
+			SetterResponse: &pb.SetterResponse{
+				ErrorMessage: &errMsg,
+			},
+		}, passedError
+	}
+
+	return nil, nil
 }
 
 func (srv *CoreServiceServer) dependencies(req *_Request) (

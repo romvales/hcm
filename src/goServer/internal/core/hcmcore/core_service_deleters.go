@@ -24,25 +24,9 @@ func (srv *CoreServiceServer) deleteItemById(_ context.Context, req *_Request, _
 
 	usedParams := []string{"targetId", "targetUuid"}
 
-	switch tableName {
-	case "workers":
-		params["userId"] = deleteReq.UserId
-		usedParams = append(usedParams, "userId")
-	case "organizations":
-
-	case "roles":
-
-	case "teams":
-	}
-
 	if columns, count := srv.countEmptyParameters(params); count > 1 || count == 0 {
 		errMsg := messages.MessageProvideAtleastOneOfTheFollowing(_funcName, usedParams)
-		return &_Response{
-			Code: pb.CoreServiceResponse_C_MISSINGPARAMETERS,
-			SetterResponse: &pb.SetterResponse{
-				ErrorMessage: &errMsg,
-			},
-		}, errors.New(errMsg)
+		return setupErrorResponse(errors.New(errMsg), pb.CoreServiceResponse_C_MISSINGPARAMETERS, "setter")
 	} else {
 		columnToSearch, id = getParameterExpectedId(columns, params)
 	}
@@ -52,13 +36,7 @@ func (srv *CoreServiceServer) deleteItemById(_ context.Context, req *_Request, _
 		var client *supabaseCommunityGo.Client
 
 		if _, client, err = srv.dependencies(req); err != nil {
-			errMsg := err.Error()
-			return &pb.CoreServiceResponse{
-				Code: pb.CoreServiceResponse_C_CLIENTERROR,
-				SetterResponse: &pb.SetterResponse{
-					ErrorMessage: &errMsg,
-				},
-			}, err
+			return setupErrorResponse(err, pb.CoreServiceResponse_C_CLIENTERROR, "setter")
 		}
 
 		if deleteReq.GetSoftDeleteOp() {
@@ -67,13 +45,7 @@ func (srv *CoreServiceServer) deleteItemById(_ context.Context, req *_Request, _
 			query := client.From(tableName).Delete("", "").Eq(columnToSearch, id)
 
 			if _, err := query.ExecuteTo(nil); err != nil {
-				errMsg := err.Error()
-				return &_Response{
-					Code: pb.CoreServiceResponse_C_DBERROR,
-					SetterResponse: &pb.SetterResponse{
-						ErrorMessage: &errMsg,
-					},
-				}, err
+				return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, "setter")
 			}
 		}
 	default:

@@ -23,14 +23,7 @@ func (srv *CoreServiceServer) saveUpsertDataToTable(
 		var client *supabaseCommunityGo.Client
 
 		if _, client, err = srv.dependencies(req); err != nil {
-			errMsg := err.Error()
-
-			return &_Response{
-				Code: pb.CoreServiceResponse_C_CLIENTERROR,
-				SetterResponse: &pb.SetterResponse{
-					ErrorMessage: &errMsg,
-				},
-			}, err
+			return setupErrorResponse(err, pb.CoreServiceResponse_C_CLIENTERROR, string(Q_SETTER))
 		}
 
 		ref := reflect.ValueOf(target)
@@ -46,29 +39,18 @@ func (srv *CoreServiceServer) saveUpsertDataToTable(
 		}
 
 		lastUpdatedAtField := ref.Elem().FieldByName("LastUpdatedAt")
-		lastUpdatedAtField.SetString(time.Now().UTC().Format(time.RFC3339Nano))
+
+		if lastUpdatedAtField.CanSet() {
+			lastUpdatedAtField.SetString(time.Now().UTC().Format(time.RFC3339Nano))
+		}
 
 		query := client.From(tableName).Upsert(target, "id", "", "planned").Single()
 
 		if _, err = query.ExecuteTo(resp); err != nil {
-			errMsg := err.Error()
-
-			return &_Response{
-				Code: pb.CoreServiceResponse_C_DBERROR,
-				SetterResponse: &pb.SetterResponse{
-					ErrorMessage: &errMsg,
-				},
-			}, err
+			return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, "setter")
 		}
 	default:
-		errMsg := goServerErrors.ErrInvalidClientFromRequestUnimplemented.Error()
-
-		return &_Response{
-			Code: pb.CoreServiceResponse_C_CLIENTERROR,
-			SetterResponse: &pb.SetterResponse{
-				ErrorMessage: &errMsg,
-			},
-		}, goServerErrors.ErrInvalidClientFromRequestUnimplemented
+		return setupErrorResponse(goServerErrors.ErrInvalidClientFromRequestUnimplemented, pb.CoreServiceResponse_C_CLIENTERROR, "setter")
 	}
 
 	return nil, nil
@@ -417,8 +399,7 @@ func (srv *CoreServiceServer) SaveAttendance(ctx _Context, req *_Request) (res *
 	target := (&converters.Attendance{}).TranslatePb(attendanceTarget)
 	resp := &converters.Attendance{}
 
-	res, err = srv.saveUpsertDataToTable(req, target, resp, "attendances")
-	if err != nil {
+	if res, err = srv.saveUpsertDataToTable(req, target, resp, "attendances"); err != nil {
 		return
 	}
 
@@ -464,8 +445,7 @@ func (srv *CoreServiceServer) SaveShift(ctx _Context, req *_Request) (res *_Resp
 		target := (&converters.OverrideShift{}).TranslatePb(overrideShiftTarget)
 		resp := &converters.OverrideShift{}
 
-		res, err = srv.saveUpsertDataToTable(req, target, resp, "overrideShifts")
-		if err != nil {
+		if res, err = srv.saveUpsertDataToTable(req, target, resp, "overrideShifts"); err != nil {
 			return
 		}
 
@@ -495,8 +475,7 @@ func (srv *CoreServiceServer) SaveShift(ctx _Context, req *_Request) (res *_Resp
 		target := (&converters.Shift{}).TranslatePb(shiftTarget)
 		resp := &converters.Shift{}
 
-		res, err = srv.saveUpsertDataToTable(req, target, resp, "standardShifts")
-		if err != nil {
+		if res, err = srv.saveUpsertDataToTable(req, target, resp, "standardShifts"); err != nil {
 			return
 		}
 

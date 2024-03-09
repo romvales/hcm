@@ -26,7 +26,6 @@ const (
 )
 
 func createMockOrganization(t *testing.T, persist bool) (organization *pb.Organization) {
-	coreService := hcmcore.NewCoreServiceServer()
 	organization = &pb.Organization{
 		Name:     DefaultFaker.Company().Name(),
 		Industry: pb.Organization_EDUCATION,
@@ -34,20 +33,25 @@ func createMockOrganization(t *testing.T, persist bool) (organization *pb.Organi
 	}
 
 	if persist {
-		res, err := coreService.SaveOrganization(context.Background(), &pb.CoreServiceRequest{
-			SetterRequest: &pb.SetterRequest{
-				OrganizationTarget: organization,
-			},
-		})
-
-		if err != nil {
-			t.Log(err)
-		}
-
-		organization = res.GetSetterResponse().GetUpdatedOrganizationTarget()
+		organization = saveMockOrganization(t, organization)
 	}
 
 	return
+}
+
+func saveMockOrganization(t *testing.T, mock *pb.Organization) *pb.Organization {
+	coreService := hcmcore.NewCoreServiceServer()
+	res, err := coreService.SaveOrganization(context.Background(), &pb.CoreServiceRequest{
+		SetterRequest: &pb.SetterRequest{
+			OrganizationTarget: mock,
+		},
+	})
+
+	if err != nil {
+		t.Log(err)
+	}
+
+	return res.SetterResponse.GetUpdatedOrganizationTarget()
 }
 
 func createMockTeam(t *testing.T, name string, organizationId int64, persist bool) *pb.Team {
@@ -59,7 +63,7 @@ func createMockTeam(t *testing.T, name string, organizationId int64, persist boo
 	}
 
 	if persist {
-		_, err := coreService.SaveTeam(context.Background(), &pb.CoreServiceRequest{
+		res, err := coreService.SaveTeam(context.Background(), &pb.CoreServiceRequest{
 			SetterRequest: &pb.SetterRequest{
 				TeamTarget: team,
 			},
@@ -68,6 +72,8 @@ func createMockTeam(t *testing.T, name string, organizationId int64, persist boo
 		if err != nil {
 			t.Error(err)
 		}
+
+		team = res.SetterResponse.GetUpdatedTeamTarget()
 	}
 
 	return team
@@ -82,7 +88,7 @@ func createMockRole(t *testing.T, name string, organizationId int64, persist boo
 	}
 
 	if persist {
-		_, err := coreService.SaveRole(context.Background(), &pb.CoreServiceRequest{
+		res, err := coreService.SaveRole(context.Background(), &pb.CoreServiceRequest{
 			SetterRequest: &pb.SetterRequest{
 				RoleTarget: role,
 			},
@@ -91,6 +97,8 @@ func createMockRole(t *testing.T, name string, organizationId int64, persist boo
 		if err != nil {
 			t.Error(err)
 		}
+
+		role = res.SetterResponse.GetUpdatedRoleTarget()
 	}
 
 	return role
