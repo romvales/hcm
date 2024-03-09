@@ -2,53 +2,43 @@ package hcmcore
 
 import (
 	"context"
-	"errors"
 	"goServer/internal/core/pb"
-	"goServer/internal/messages"
 
 	supabaseCommunityGo "github.com/supabase-community/supabase-go"
 )
 
-func (srv *CoreServiceServer) deleteItemById(_ context.Context, req *_Request, _funcName, tableName string) (res *_Response, err error) {
-	var id, columnToSearch string
+func (srv *CoreServiceServer) deleteItemById(ctx context.Context, req *_Request, _funcName, tableName string) (res *_Response, err error) {
+	res, err = srv.queryItemById(ctx, CoreServiceGetQueryParams{
+		Query:    Q_SETTER,
+		FuncName: _funcName,
+		Req:      req,
+		Callback: DatabaseActionCallback{
+			UseSupabaseCommunityClient: true,
+			SupabaseCallback: func(ctx _Context, req *_Request, resp, client any) (*_Response, error) {
+				columnToSearch, id := getParameterExpectedFromContext(ctx)
+				supabaseClient := client.(*supabaseCommunityGo.Client)
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
-		return res, err
-	}
+				deleteReq := req.GetSetterRequest()
 
-	deleteReq := req.SetterRequest
-	params := map[string]interface{}{
-		"id":   deleteReq.TargetId,
-		"uuid": deleteReq.TargetUuid,
-	}
+				query := supabaseClient.From(tableName).Delete("", "").Eq(columnToSearch, id)
 
-	usedParams := []string{"targetId", "targetUuid"}
+				// TODO: Handle soft delete operations
+				if deleteReq.GetSoftDeleteOp() {
 
-	if columns, count := srv.countEmptyParameters(params); count > 1 || count == 0 {
-		errMsg := messages.MessageProvideAtleastOneOfTheFollowing(_funcName, usedParams)
-		return setupErrorResponse(errors.New(errMsg), pb.CoreServiceResponse_C_MISSINGPARAMETERS, "setter")
-	} else {
-		columnToSearch, id = getParameterExpectedId(columns, params)
-	}
+					return nil, nil
+				}
 
-	switch req.GetUsedClient() {
-	case pb.CoreServiceRequest_C_SUPABASE:
-		var client *supabaseCommunityGo.Client
+				if _, err := query.ExecuteTo(resp); err != nil {
+					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, Q_SETTER)
+				}
 
-		if _, client, err = srv.dependencies(req); err != nil {
-			return setupErrorResponse(err, pb.CoreServiceResponse_C_CLIENTERROR, "setter")
-		}
+				return nil, nil
+			},
+		},
+	})
 
-		if deleteReq.GetSoftDeleteOp() {
-			// TODO: Handle soft deletion
-		} else {
-			query := client.From(tableName).Delete("", "").Eq(columnToSearch, id)
-
-			if _, err := query.ExecuteTo(nil); err != nil {
-				return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, "setter")
-			}
-		}
-	default:
+	if err != nil {
+		return
 	}
 
 	return &_Response{
@@ -111,7 +101,7 @@ func (srv *CoreServiceServer) DeleteShiftById(ctx _Context, req *_Request) (res 
 	var _funcName = "CoreServiceServer.DeleteShiftById()"
 	var tableName = "standardShifts"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -126,6 +116,5 @@ func (srv *CoreServiceServer) DeleteShiftById(ctx _Context, req *_Request) (res 
 
 func (srv *CoreServiceServer) DeleteAttendanceById(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.DeleteAttendanceById()"
-
 	return srv.deleteItemById(ctx, req, _funcName, "attendances")
 }

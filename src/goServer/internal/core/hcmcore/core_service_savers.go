@@ -1,66 +1,66 @@
 package hcmcore
 
 import (
+	"context"
 	"goServer/internal/core/converters"
 	"goServer/internal/core/pb"
 	"reflect"
 	"time"
 
-	goServerErrors "goServer/internal/errors"
-
 	"github.com/google/uuid"
 	supabaseCommunityGo "github.com/supabase-community/supabase-go"
 )
 
-func (srv *CoreServiceServer) saveUpsertDataToTable(
-	req *_Request,
-	target any,
-	resp any,
-	tableName string) (res *_Response, err error) {
+func (srv *CoreServiceServer) saveUpsertDataToTable(req *_Request, target any, resp any, tableName string) (res *_Response, err error) {
+	var _funcName = "CoreServiceServer.saveUpsertDataToTable()"
 
-	switch req.GetUsedClient() {
-	case pb.CoreServiceRequest_C_SUPABASE:
-		var client *supabaseCommunityGo.Client
+	return srv.queryItemById(context.Background(), CoreServiceGetQueryParams{
+		Query:    Q_SETTER,
+		FuncName: _funcName,
+		Req:      req,
+		Resp:     resp,
 
-		if _, client, err = srv.dependencies(req); err != nil {
-			return setupErrorResponse(err, pb.CoreServiceResponse_C_CLIENTERROR, string(Q_SETTER))
-		}
+		// Disable the default req parameters check for this query.
+		DisableReqParamsCheck: true,
+		Callback: DatabaseActionCallback{
+			UseSupabaseCommunityClient: true,
+			SupabaseCallback: func(ctx _Context, req *_Request, resp, client any) (*_Response, error) {
+				supabaseClient := client.(*supabaseCommunityGo.Client)
 
-		ref := reflect.ValueOf(target)
-		uuidField := ref.Elem().FieldByName("Uuid")
+				ref := reflect.ValueOf(target)
+				uuidField := ref.Elem().FieldByName("Uuid")
+				lastUpdatedAtField := ref.Elem().FieldByName("LastUpdatedAt")
 
-		// When the uuid column is empty, make sure to set a uuid for it.
-		// It is assumed that when the uuid column is empty, it is a new data.
-		if uuidField.CanSet() && uuidField.IsZero() {
-			createdAt := ref.Elem().FieldByName("CreatedAt")
-			createdAt.SetString(time.Now().UTC().Format(time.RFC3339Nano))
+				// When the uuid column is empty, make sure to set a uuid for it.
+				// It is assumed that when the uuid column is empty, it is a new data.
+				if uuidField.CanSet() && uuidField.IsZero() {
+					createdAt := ref.Elem().FieldByName("CreatedAt")
+					createdAt.SetString(time.Now().UTC().Format(time.RFC3339Nano))
 
-			uuidField.SetString(uuid.NewString())
-		}
+					uuidField.SetString(uuid.NewString())
+				}
 
-		lastUpdatedAtField := ref.Elem().FieldByName("LastUpdatedAt")
+				if lastUpdatedAtField.CanSet() {
+					lastUpdatedAtField.SetString(time.Now().UTC().Format(time.RFC3339Nano))
+				}
 
-		if lastUpdatedAtField.CanSet() {
-			lastUpdatedAtField.SetString(time.Now().UTC().Format(time.RFC3339Nano))
-		}
+				query := supabaseClient.From(tableName).Upsert(target, "id", "", "planned").Single()
 
-		query := client.From(tableName).Upsert(target, "id", "", "planned").Single()
+				if _, err = query.ExecuteTo(resp); err != nil {
+					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, Q_SETTER)
+				}
 
-		if _, err = query.ExecuteTo(resp); err != nil {
-			return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, "setter")
-		}
-	default:
-		return setupErrorResponse(goServerErrors.ErrInvalidClientFromRequestUnimplemented, pb.CoreServiceResponse_C_CLIENTERROR, "setter")
-	}
-
-	return nil, nil
+				return nil, nil
+			},
+		},
+	})
 }
 
 // SaveWorker saves the provided pb.Worker parameter.
 func (srv *CoreServiceServer) SaveWorker(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveWorker()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -89,7 +89,7 @@ func (srv *CoreServiceServer) SaveWorker(ctx _Context, req *_Request) (res *_Res
 func (srv *CoreServiceServer) SaveOrganization(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveOrganization()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -118,7 +118,7 @@ func (srv *CoreServiceServer) SaveOrganization(ctx _Context, req *_Request) (res
 func (srv *CoreServiceServer) SaveRole(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveRole()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -151,7 +151,7 @@ func (srv *CoreServiceServer) SaveRole(ctx _Context, req *_Request) (res *_Respo
 func (srv *CoreServiceServer) SaveTeam(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveTeam()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -184,7 +184,7 @@ func (srv *CoreServiceServer) SaveTeam(ctx _Context, req *_Request) (res *_Respo
 func (srv *CoreServiceServer) SaveWorkerIdentityCard(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveWorkerIdentityCard()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -222,7 +222,7 @@ func (srv *CoreServiceServer) SaveWorkerIdentityCard(ctx _Context, req *_Request
 func (srv *CoreServiceServer) SaveMember(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveMember()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -255,7 +255,7 @@ func (srv *CoreServiceServer) SaveMember(ctx _Context, req *_Request) (res *_Res
 func (srv *CoreServiceServer) SaveCompensation(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveCompensation()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -288,7 +288,7 @@ func (srv *CoreServiceServer) SaveCompensation(ctx _Context, req *_Request) (res
 func (srv *CoreServiceServer) SaveAddition(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveAddition()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -317,7 +317,7 @@ func (srv *CoreServiceServer) SaveAddition(ctx _Context, req *_Request) (res *_R
 func (srv *CoreServiceServer) SaveDeduction(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveDeduction()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -346,7 +346,7 @@ func (srv *CoreServiceServer) SaveDeduction(ctx _Context, req *_Request) (res *_
 func (srv *CoreServiceServer) SavePayroll(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SavePayroll()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -379,7 +379,7 @@ func (srv *CoreServiceServer) SavePayroll(ctx _Context, req *_Request) (res *_Re
 func (srv *CoreServiceServer) SaveAttendance(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveAttendance()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 
@@ -414,7 +414,7 @@ func (srv *CoreServiceServer) SaveAttendance(ctx _Context, req *_Request) (res *
 func (srv *CoreServiceServer) SaveShift(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SaveShift()"
 
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err := checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return res, err
 	}
 

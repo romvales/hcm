@@ -1,13 +1,9 @@
 package hcmcore
 
 import (
-	"context"
 	"goServer/internal/core/converters"
 	"goServer/internal/core/pb"
-	"goServer/internal/messages"
 	"strconv"
-
-	goServerErrors "goServer/internal/errors"
 
 	"github.com/nedpals/supabase-go"
 )
@@ -25,15 +21,16 @@ type DatabaseActionCallback struct {
 }
 
 type CoreServiceGetQueryParams struct {
-	Query               CoreServiceQueryType
-	FuncName            string
-	Req                 *_Request
-	Resp                any
-	AdditionalReqParams map[string]any
-	Callback            DatabaseActionCallback
+	Query                 CoreServiceQueryType
+	FuncName              string
+	Req                   *_Request
+	Resp                  any
+	DisableReqParamsCheck bool
+	AdditionalReqParams   map[string]any
+	Callback              DatabaseActionCallback
 }
 
-type GetterContextKey string
+type QueryContextKey string
 
 func supabaseGetItemByIdCallback(tableName string) func(ctx _Context, req *_Request, resp, client any) (*_Response, error) {
 	return func(ctx _Context, req *_Request, resp, client any) (res *_Response, err error) {
@@ -42,60 +39,11 @@ func supabaseGetItemByIdCallback(tableName string) func(ctx _Context, req *_Requ
 
 		err = supabaseClient.DB.From(tableName).Select().Single().Eq(columnToSearch, id).Execute(&resp)
 		if err != nil {
-			return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, string(Q_GETTER))
+			return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, Q_GETTER)
 		}
 
 		return nil, nil
 	}
-}
-
-func (srv *CoreServiceServer) queryItemById(ctx _Context, params CoreServiceGetQueryParams) (res *_Response, err error) {
-	req := params.Req
-	resp := params.Resp
-	callback := params.Callback
-	_funcName := params.FuncName
-	requiredParams := []string{"userId", "targetId", "targetUuid"}
-
-	if res, err := checkIfHasValidRequestParams(_funcName, req, "getter"); err != nil {
-		return res, err
-	}
-
-	getterRequest := req.GetterRequest
-
-	getterParams := map[string]any{
-		"userId": getterRequest.UserId,
-		"id":     getterRequest.TargetId,
-		"uuid":   getterRequest.TargetUuid,
-	}
-
-	for key, value := range params.AdditionalReqParams {
-		getterParams[key] = value
-		requiredParams = append(requiredParams, key)
-	}
-
-	if columns, count := srv.countEmptyParameters(getterParams); count > 1 || count == 0 {
-		errMsg := messages.MessageProvideAtleastOneOfTheFollowing(_funcName, requiredParams)
-		return setupErrorResponse(goServerErrors.ErrMissingRequestParameter(errMsg), pb.CoreServiceResponse_C_CLIENTERROR, string(params.Query))
-	} else {
-		columnToSearch, id := getParameterExpectedId(columns, getterParams)
-		ctx = context.WithValue(ctx, GetterContextKey("columnToSearch"), columnToSearch)
-		ctx = context.WithValue(ctx, GetterContextKey("id"), id)
-	}
-
-	switch req.GetUsedClient() {
-	case pb.CoreServiceRequest_C_SUPABASE:
-		if callback.UseSupabaseCommunityClient {
-			client := srv.GetSupabaseCommunityClient()
-			callback.SupabaseCallback(ctx, req, resp, client)
-		} else {
-			client := srv.GetSupabaseClient()
-			callback.SupabaseCallback(ctx, req, resp, client)
-		}
-	default:
-		return setupErrorResponse(goServerErrors.ErrInvalidClientFromRequestUnimplemented, pb.CoreServiceResponse_C_CLIENTERROR, "setter")
-	}
-
-	return nil, nil
 }
 
 func (srv *CoreServiceServer) GetWorkerById(ctx _Context, req *_Request) (res *_Response, err error) {
@@ -168,7 +116,7 @@ func (srv *CoreServiceServer) GetOrganizationsByCreatorId(ctx _Context, req *_Re
 
 				err = supabaseClient.DB.From("organizations").Select().Eq("createdById", workerId).Execute(&resp)
 				if err != nil {
-					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, "getter")
+					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, Q_GETTER)
 				}
 
 				for _, organization := range resp {
@@ -261,7 +209,7 @@ func (srv *CoreServiceServer) GetRolesFromOrganization(ctx _Context, req *_Reque
 
 				err = supabaseClient.DB.From("roles").Select().Eq("organizationId", organizationId).Execute(&resp)
 				if err != nil {
-					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, "getter")
+					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, Q_GETTER)
 				}
 
 				for _, role := range resp {
@@ -302,7 +250,7 @@ func (srv *CoreServiceServer) GetTeamsFromOrganization(ctx _Context, req *_Reque
 
 				err = supabaseClient.DB.From("teams").Select().Eq("organizationId", organizationId).Execute(&resp)
 				if err != nil {
-					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, "getter")
+					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, Q_GETTER)
 				}
 
 				for _, team := range resp {
@@ -344,7 +292,7 @@ func (srv *CoreServiceServer) GetOrganizationMembers(ctx _Context, req *_Request
 
 				err = supabaseClient.DB.From("organizationsMembers").Select().Eq("organizationId", organizationId).Execute(&resp)
 				if err != nil {
-					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, "getter")
+					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, Q_GETTER)
 				}
 
 				for _, member := range resp {
@@ -385,7 +333,7 @@ func (srv *CoreServiceServer) GetOrganizationJoinRequests(ctx _Context, req *_Re
 				resp := []*converters.OrganizationPendingRequestRelation{}
 
 				if err = supabaseClient.DB.From("organizationsPendingRequests").Select().Eq("organizationId", organizationId).Execute(&resp); err != nil {
-					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, "getter")
+					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, Q_GETTER)
 				}
 
 				for _, joinRequest := range resp {
@@ -426,7 +374,7 @@ func (srv *CoreServiceServer) GetWorkerJoinRequests(ctx _Context, req *_Request)
 				resp := []*converters.WorkerPendingRequestRelation{}
 
 				if err = supabaseClient.DB.From("workersPendingRequests").Select().Eq("workerId", workerId).Execute(&resp); err != nil {
-					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, "getter")
+					return setupErrorResponse(err, pb.CoreServiceResponse_C_DBERROR, Q_GETTER)
 				}
 
 				for _, joinRequest := range resp {

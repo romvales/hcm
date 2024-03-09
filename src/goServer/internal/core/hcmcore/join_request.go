@@ -9,7 +9,7 @@ import (
 func (srv *CoreServiceServer) SendJoinRequest(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.SendJoinRequest()"
 
-	if res, err = checkIfHasValidRequestParams(_funcName, req, "setter"); err != nil {
+	if res, err = checkIfHasValidRequestParams(_funcName, req, Q_SETTER); err != nil {
 		return
 	}
 

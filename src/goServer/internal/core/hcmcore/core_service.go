@@ -10,9 +10,6 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
-
-	"github.com/nedpals/supabase-go"
-	supabaseCommunityGo "github.com/supabase-community/supabase-go"
 )
 
 type CoreServiceServer struct {
@@ -76,43 +73,36 @@ func getParameterExpectedId(columns []string, params map[string]any) (columnToSe
 }
 
 func getParameterExpectedFromContext(ctx _Context) (columnToSearch string, id string) {
-	if columnName, ok := ctx.Value(GetterContextKey("columnToSearch")).(string); ok {
+	if columnName, ok := ctx.Value(QueryContextKey("columnToSearch")).(string); ok {
 		columnToSearch = columnName
 	}
 
-	if value, ok := ctx.Value(GetterContextKey("id")).(string); ok {
+	if value, ok := ctx.Value(QueryContextKey("id")).(string); ok {
 		id = value
 	}
 
 	return
 }
 
-func checkIfHasValidRequestParams(_funcName string, req *_Request, _type string) (*_Response, error) {
-	if res, err := checkRequestForMissingParameters(
-		req,
-		messages.MessageNoRequestBodyProvided(_funcName),
-	); err != nil {
+func checkIfHasValidRequestParams(_funcName string, req *_Request, _type CoreServiceQueryType) (*_Response, error) {
+	noReqBodyMsg := messages.MessageNoRequestBodyProvided(_funcName)
+
+	if res, err := checkRequestForMissingParameters(req, noReqBodyMsg); err != nil {
 		return res, err
 	}
 
 	switch _type {
-	case "getter":
+	case Q_GETTER:
 		getterReq := req.GetterRequest
 
-		if res, err := checkRequestForMissingParameters(
-			getterReq,
-			messages.MessageNoRequestBodyProvided(_funcName),
-		); err != nil {
+		if res, err := checkRequestForMissingParameters(getterReq, noReqBodyMsg); err != nil {
 			return res, err
 		}
 
-	case "setter":
+	case Q_SETTER:
 		setterReq := req.SetterRequest
 
-		if res, err := checkRequestForMissingParameters(
-			setterReq,
-			messages.MessageNoRequestBodyProvided(_funcName),
-		); err != nil {
+		if res, err := checkRequestForMissingParameters(setterReq, noReqBodyMsg); err != nil {
 			return res, err
 		}
 	}
@@ -120,18 +110,18 @@ func checkIfHasValidRequestParams(_funcName string, req *_Request, _type string)
 	return nil, nil
 }
 
-func setupErrorResponse(passedError error, code pb.CoreServiceResponse_CoreServiceResponseCode, typ string) (res *_Response, err error) {
+func setupErrorResponse(passedError error, code pb.CoreServiceResponse_CoreServiceResponseCode, typ CoreServiceQueryType) (res *_Response, err error) {
 	errMsg := passedError.Error()
 
 	switch typ {
-	case "getter":
+	case Q_GETTER:
 		return &_Response{
 			Code: code,
 			GetterResponse: &pb.GetterResponse{
 				ErrorMessage: &errMsg,
 			},
 		}, passedError
-	case "setter":
+	case Q_SETTER:
 		return &_Response{
 			Code: code,
 			SetterResponse: &pb.SetterResponse{
@@ -141,19 +131,6 @@ func setupErrorResponse(passedError error, code pb.CoreServiceResponse_CoreServi
 	}
 
 	return nil, nil
-}
-
-func (srv *CoreServiceServer) dependencies(req *_Request) (
-	*supabase.Client,
-	*supabaseCommunityGo.Client,
-	error,
-) {
-
-	if _, err := srv.GetClientFromRequest(req); err != nil {
-		return nil, nil, err
-	}
-
-	return srv.GetSupabaseClient(), srv.GetSupabaseCommunityClient(), nil
 }
 
 func (srv *CoreServiceServer) countEmptyParameters(params map[string]any) (nonEmptyParams []string, count int) {
@@ -176,4 +153,65 @@ func (srv *CoreServiceServer) someRequiredFieldAreNotProvided(_funcName, fields 
 			ErrorMessage: &errMsg,
 		},
 	}, errors.New(errMsg)
+}
+
+func (srv *CoreServiceServer) queryItemById(ctx _Context, params CoreServiceGetQueryParams) (res *_Response, err error) {
+	req := params.Req
+	resp := params.Resp
+	callback := params.Callback
+	_funcName := params.FuncName
+	queryTyp := params.Query
+	requiredParams := []string{"userId", "targetId", "targetUuid"}
+
+	if queryTyp == "" {
+		queryTyp = Q_GETTER
+	}
+
+	if res, err := checkIfHasValidRequestParams(_funcName, req, queryTyp); err != nil {
+		return res, err
+	}
+
+	if !params.DisableReqParamsCheck {
+		queryParams := map[string]any{}
+
+		switch queryTyp {
+		case Q_GETTER:
+			queryParams["userId"] = req.GetterRequest.UserId
+			queryParams["id"] = req.GetterRequest.TargetId
+			queryParams["uuid"] = req.GetterRequest.TargetUuid
+		case Q_SETTER:
+			queryParams["userId"] = req.SetterRequest.UserId
+			queryParams["id"] = req.SetterRequest.TargetId
+			queryParams["uuid"] = req.SetterRequest.TargetUuid
+		}
+
+		for key, value := range params.AdditionalReqParams {
+			queryParams[key] = value
+			requiredParams = append(requiredParams, key)
+		}
+
+		if columns, count := srv.countEmptyParameters(queryParams); count > 1 || count == 0 {
+			errMsg := messages.MessageProvideAtleastOneOfTheFollowing(_funcName, requiredParams)
+			return setupErrorResponse(goServerErrors.ErrMissingRequestParameter(errMsg), pb.CoreServiceResponse_C_CLIENTERROR, queryTyp)
+		} else {
+			columnToSearch, id := getParameterExpectedId(columns, queryParams)
+			ctx = context.WithValue(ctx, QueryContextKey("columnToSearch"), columnToSearch)
+			ctx = context.WithValue(ctx, QueryContextKey("id"), id)
+		}
+	}
+
+	switch req.GetUsedClient() {
+	case pb.CoreServiceRequest_C_SUPABASE:
+		if callback.UseSupabaseCommunityClient {
+			client := srv.GetSupabaseCommunityClient()
+			callback.SupabaseCallback(ctx, req, resp, client)
+		} else {
+			client := srv.GetSupabaseClient()
+			callback.SupabaseCallback(ctx, req, resp, client)
+		}
+	default:
+		return setupErrorResponse(goServerErrors.ErrInvalidClientFromRequestUnimplemented, pb.CoreServiceResponse_C_CLIENTERROR, queryTyp)
+	}
+
+	return nil, nil
 }
