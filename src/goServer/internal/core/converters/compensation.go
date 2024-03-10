@@ -24,6 +24,7 @@ func ConvertMapToCompensationProto(mp *Compensation) *pb.Compensation {
 		Value:          float32(mp.Value),
 		Flags:          mp.Flags,
 		Uuid:           mp.Uuid,
+		Scheme:         pb.Compensation_CompensationScheme(mp.Scheme),
 	}
 
 	return result

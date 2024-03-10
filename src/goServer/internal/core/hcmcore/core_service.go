@@ -202,12 +202,16 @@ func (srv *CoreServiceServer) queryItemById(ctx _Context, params CoreServiceGetQ
 
 	switch req.GetUsedClient() {
 	case pb.CoreServiceRequest_C_SUPABASE:
+		var client any
+
 		if callback.UseSupabaseCommunityClient {
-			client := srv.GetSupabaseCommunityClient()
-			callback.SupabaseCallback(ctx, req, resp, client)
+			client = srv.GetSupabaseCommunityClient()
 		} else {
-			client := srv.GetSupabaseClient()
-			callback.SupabaseCallback(ctx, req, resp, client)
+			client = srv.GetSupabaseClient()
+		}
+
+		if res, err = callback.SupabaseCallback(ctx, req, resp, client); err != nil {
+			return
 		}
 	default:
 		return setupErrorResponse(goServerErrors.ErrInvalidClientFromRequestUnimplemented, pb.CoreServiceResponse_C_CLIENTERROR, queryTyp)

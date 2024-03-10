@@ -16,11 +16,11 @@ message Worker {
   enum Flag {
     UNKNOWN = 0;
 
-    G_MALE = 1;
-    G_FEMALE = 2;
-    G_OTHER = 4;
+    S_DELETED = 4;
 
-    S_DELETED = 8;
+    G_MALE = 8;
+    G_FEMALE = 16;
+    G_OTHER = 32;
   }
 
   int64 id = 1;
@@ -50,17 +50,20 @@ message WorkerIdentityCard {
   enum Flag {
     UNKNOWN = 0;
 
-    C_EMPLOYEE = 1;
-    C_SCHOOL = 2;
-    C_BUSINESS = 4;
-    C_MEDICAL = 8;
-    C_GOVERNMENT = 16;
-    C_PASSPORT = 32;
-    C_PROFESSION = 64;
-    C_POSTAL = 128;
-    C_OTHER = 256;
+    S_DELETED = 4;
 
-    S_DELETED = 512;
+    C_EMPLOYEE = 8;
+    C_SCHOOL = 16;
+    C_BUSINESS = 32;
+    C_MEDICAL = 64;
+    C_GOVERNMENT = 128;
+    C_PASSPORT = 256;
+    C_PROFESSION = 512;
+    C_POSTAL = 1024;
+    C_OTHER = 2048;
+
+    T_PRIMARY = 4096;
+    T_SECONDARY = 8192;
   }
 
   int64 id = 1;
@@ -105,6 +108,7 @@ message Organization {
   enum Flag {
     UNKNOWN = 0;
 
+    S_DELETED = 4;
   }
 
   enum Industry {
@@ -152,24 +156,24 @@ message Member {
   enum Flag {
     UNKNOWN = 0;
 
+    S_DELETED = 4;
+
     // Toggle each of these bits according to the current state
     // of the worker in an organization.
-    S_REMOTE = 1;
-    S_HIRED = 2;
-    S_DAYOFF = 4;
-    S_ONCALL = 8;
-    S_ONLEAVE = 16;
-    S_TERMINATED = 32;
-    S_SUSPENDED = 64;
+    S_REMOTE = 8;
+    S_HIRED = 16;
+    S_DAYOFF = 32;
+    S_ONCALL = 64;
+    S_ONLEAVE = 128;
+    S_TERMINATED = 256;
+    S_SUSPENDED = 512;
 
-    T_FULLTIME = 128;
-    T_PARTTIME = 256;
-    T_SEASONAL = 512;
-    T_TEMPORARY = 1024;
-    T_LEASED = 2048;
-    T_CONTINGENT = 4096;
-
-    S_DELETED = 8192;
+    T_FULLTIME = 1024;
+    T_PARTTIME = 2048;
+    T_SEASONAL = 4096;
+    T_TEMPORARY = 8192;
+    T_LEASED = 16384;
+    T_CONTINGENT = 32768;
   }
 
   int64 id = 1;
@@ -186,6 +190,7 @@ message Member {
   optional google.protobuf.Timestamp scheduledSuspensionAt = 12;
   uint32 flags = 15;
   string uuid = 16;
+
 }
 
 //
@@ -206,20 +211,27 @@ message JoinRequest {
   enum Flag {
     UNKNOWN = 0;
 
-    S_WAIT = 1;
-    S_ACCEPT = 2;
-    S_REJECT = 4;
-    S_EXPIRED = 8;
-    S_DELETED = 16;
+    S_DELETED = 4;
+
+    S_WAIT = 8;
+    S_ACCEPT = 16;
+    S_REJECT = 32;
+    S_EXPIRED = 64;
+  }
+
+  enum RequestSenderType {
+    T_ORGANIZATION = 0;
+    T_WORKER = 1;
   }
 
   int64 id = 1;
   int64 workerId = 2;
   int64 organizationId = 3;
-  google.protobuf.Timestamp createdAt = 4;
-  google.protobuf.Timestamp expiredAt = 5;
-  uint32 flags = 6;
-  string uuid = 7;
+  RequestSenderType senderType = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  google.protobuf.Timestamp expiredAt = 6;
+  uint32 flags = 7;
+  string uuid = 8;
 }
 
 //
@@ -242,6 +254,7 @@ message WorkerPendingRequestRelation {
   int64 requestId = 3;
 }
 
+// @TOMORROW Decide whether we will have to put the rate in the role or individually on the Member message
 //
 //
 //
@@ -249,6 +262,8 @@ message WorkerPendingRequestRelation {
 message Role {
   enum Flag {
     UNKNOWN = 0;
+
+    S_DELETED = 4;
   }
   
   int64 id = 1;
@@ -290,6 +305,8 @@ message WorkerRoleRelation {
 message Team {
   enum Flag {
     UNKNOWN = 0;
+
+    S_DELETED = 4;
   }
 
   int64 id = 1;
@@ -313,7 +330,7 @@ message TeamMemberRelation {
   int64 workerId = 3;
 }
 
-//
+// 
 //
 //
 // Table: compensations
@@ -321,7 +338,17 @@ message Compensation {
   enum Flag {
     UNKNOWN = 0;
 
-    S_PAID = 1;
+    S_DELETED = 4;
+
+    S_PAID = 8;
+  }
+
+  enum CompensationScheme {
+    WAGE = 0;
+    SALARY = 1;
+    COMMISSION = 2;
+    BONUS = 3;
+    TIP = 4;
   }
 
   int64 id = 1;
@@ -342,6 +369,7 @@ message Compensation {
   float value = 16;
   uint32 flags = 17;
   string uuid = 18;
+  CompensationScheme scheme = 19;
 }
 
 //
@@ -351,34 +379,35 @@ message Compensation {
 message Addition {
   enum Flag {
     UNKNOWN = 0;
+    
     T_EPHEMERAL = 1;
-  }
-
-  int64 id = 1;
-  optional int64 createdById = 2;
-  optional int64 updatedByid = 3;
-  optional int64 workerId = 4;
-  google.protobuf.Timestamp createdAt = 5;
-  optional google.protobuf.Timestamp lastUpdatedAt = 6;
-  optional google.protobuf.Timestamp effectiveAt = 7;
-  string name = 8;
-  float value = 9;
-  uint32 flags = 10;
-  string uuid = 11;
-}
-
-//
-//
-//
-// Table: deductions
-message Deduction {
-  enum Flag {
-    UNKNOWN = 0;
-
-    T_EPHEMERAL = 1;
-    T_VOLUNTARY = 2;
+    T_USED = 2;
 
     S_DELETED = 4;
+
+    BT_OVERTIME = 8;
+    BT_LEAVE = 16;
+    BT_DEVELOPMENT = 32;
+    BT_FOOD = 64;
+    BT_GIFT = 128;
+    BT_ACTIVITY = 256;
+    BT_HEALTH = 512;
+    BT_WELNESS = 1024;
+    BT_ASSISTANCE = 2048;
+
+    A_FIXED = 4096;
+    A_FACTORED = 8192;
+
+    // When A_MOCK bit flag is on, it indicates that this addition can be used as a template for new Addition.
+    A_MOCK = 16384;
+  }
+
+  enum AdditionType {
+    ALLOWANCE = 0;
+    BENEFIT = 1;
+
+    // Perks are cancelled out from the total compensation
+    PERK = 2;
   }
 
   int64 id = 1;
@@ -392,6 +421,52 @@ message Deduction {
   float value = 9;
   uint32 flags = 10;
   string uuid = 11;
+  AdditionType typ = 12;
+}
+
+//
+//
+//
+// Table: deductions
+message Deduction {
+  enum Flag {
+    UNKNOWN = 0;
+
+    T_EPHEMERAL = 1;
+    T_USED = 2;
+
+    S_DELETED = 4;
+
+    DT_OPTIONAL = 8;
+    DT_REQUIRED = 16;
+
+    D_FIXED = 4096;
+    D_FACTORED = 8192;
+
+    // Just like A_MOCK bit flag, this bit flag can be switched on to indicate that this can be used as a template.
+    D_MOCK = 16384;
+  }
+
+  enum DeductionType {
+    INSURANCE = 0;
+    TAX = 1;
+    GARNISHMENT = 2;
+    FINE = 3;
+    OTHER = 4;
+  }
+
+  int64 id = 1;
+  optional int64 createdById = 2;
+  optional int64 updatedById = 3;
+  optional int64 workerId = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  optional google.protobuf.Timestamp lastUpdatedAt = 6;
+  optional google.protobuf.Timestamp effectiveAt = 7;
+  string name = 8;
+  float value = 9;
+  uint32 flags = 10;
+  string uuid = 11;
+  DeductionType typ = 12;
 }
 
 //
@@ -414,6 +489,7 @@ message CompensationDeductionRelation {
   int64 deductionId = 3;
 }
 
+// @TOMORROW Refine and add related flags that are mandatory for a payroll
 //
 //
 //
@@ -423,6 +499,8 @@ message Payroll {
     UNKNOWN = 0;
 
     S_PAID = 1;
+
+    S_DELETED = 4;
   }
   
   int64 id = 1;
@@ -448,13 +526,15 @@ message PayrollCompensationRelation {
   int64 compensationId = 3;
 }
 
-//
+// @TOMORROW Refine the flags of the Attendance message
 //
 //
 // Table: attendances
 message Attendance {
   enum Flag {
     UNKNOWN = 0;
+
+    S_DELETED = 4;
   }
 
   int64 id = 1;
@@ -477,15 +557,25 @@ message Attendance {
 }
 
 enum ShiftDay {
-  MON = 0; TUE = 1; WED = 2; THU = 3; FRI = 4; SAT = 5; SUN = 6;
+  MON = 0;
+  TUE = 1;
+  WED = 2;
+  THU = 3;
+  FRI = 4;
+  SAT = 5;
+  SUN = 6;
 }
 
-//
-//
-//
-//
+// 
+// 
 // Table: standardShifts
 message Shift {
+  enum Flag {
+    UNKNOWN = 0;
+
+    S_DELETED = 4;
+  }
+
   int64 id = 1;
   optional int64 createdById = 2;
   optional int64 updatedById = 3;
@@ -498,9 +588,10 @@ message Shift {
   google.protobuf.Timestamp clockOut = 10;
   uint32 flags = 11;
   string uuid = 12;
+  string groupId = 13;
 }
 
-//
+// @TOMORROW Find a way in how an HR can set a holiday, special non-working, and weekend shift.
 //
 //
 //
@@ -508,6 +599,8 @@ message Shift {
 message OverrideShift {
   enum Flag {
     UNKNOWN = 0;
+
+    S_DELETED = 4;
   }
 
   int64 id = 1;

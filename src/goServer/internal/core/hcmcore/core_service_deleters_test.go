@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -431,6 +432,44 @@ func TestDeleteAttendanceById(t *testing.T) {
 		cleanCreatedMockDataInTableNameById(t, "workers", worker.Id)
 		cleanCreatedMockDataInTableNameById(t, "standardShifts", shift.Id)
 		cleanCreatedMockDataInTableNameById(t, "organizations", organization.Id)
+	})
+
+}
+
+func TestDeleteJoinRequestById(t *testing.T) {
+	assert := assert.New(t)
+	coreService := hcmcore.NewCoreServiceServer()
+
+	t.Run("should delete a mock join request by using an id", func(t *testing.T) {
+		organization := createMockOrganization(t, true)
+		worker := createMockWorker(t, true)
+
+		res, err := coreService.SaveJoinRequest(context.Background(), &pb.CoreServiceRequest{
+			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+			SetterRequest: &pb.SetterRequest{
+				RequestSenderType: pb.JoinRequest_T_ORGANIZATION.Enum(),
+				RequestSenderId:   &organization.Id,
+				TargetId:          &worker.Id,
+			},
+		})
+
+		assertCheckForMissingResponse(t, err, res)
+
+		savedRequest := res.SetterResponse.GetJoinRequestResult()
+
+		assert.Equal(savedRequest.GetSenderType(), pb.JoinRequest_T_ORGANIZATION, "did not match the expected sender type")
+
+		res, err = coreService.DeleteJoinRequestById(context.Background(), &pb.CoreServiceRequest{
+			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+			SetterRequest: &pb.SetterRequest{
+				TargetId: &savedRequest.Id,
+			},
+		})
+
+		assertCheckForMissingResponse(t, err, res)
+
+		cleanCreatedMockDataInTableNameById(t, "organizations", organization.Id)
+		cleanCreatedMockDataInTableNameById(t, "workers", worker.Id)
 	})
 
 }

@@ -7,6 +7,7 @@ func ConvertMapToJoinRequestProto(mp *JoinRequest) *pb.JoinRequest {
 		Id:             mp.Id,
 		WorkerId:       mp.WorkerId,
 		OrganizationId: mp.OrganizationId,
+		SenderType:     pb.JoinRequest_RequestSenderType(mp.SenderType),
 		CreatedAt:      convertIso8601ToTimestamppb(mp.CreatedAt),
 		ExpiredAt:      convertIso8601ToTimestamppb(mp.ExpiredAt),
 		Flags:          mp.Flags,

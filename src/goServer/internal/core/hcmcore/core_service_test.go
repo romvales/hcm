@@ -104,6 +104,59 @@ func createMockRole(t *testing.T, name string, organizationId int64, persist boo
 	return role
 }
 
+func createMockShift(t *testing.T, organizationId int64, typ pb.SetterRequest_ShiftOpType, persist bool) any {
+	coreService := hcmcore.NewCoreServiceServer()
+
+	var resp any
+
+	coreServiceReq := &pb.CoreServiceRequest{
+		SetterRequest: &pb.SetterRequest{
+			TargetShiftType: typ.Enum(),
+		},
+	}
+
+	switch typ {
+	case pb.SetterRequest_T_OVERRIDESHIFT:
+		overrideShift := &pb.OverrideShift{
+			OrganizationId:   organizationId,
+			Name:             "Rom Vales' Override Shift",
+			OverrideClockIn:  timestamppb.Now(),
+			OverrideClockOut: timestamppb.Now(),
+		}
+
+		coreServiceReq.SetterRequest.OverrideShiftTarget = overrideShift
+		resp = overrideShift
+	case pb.SetterRequest_T_SHIFT:
+		shift := &pb.Shift{
+			OrganizationId: organizationId,
+			Name:           "Finance Shift",
+			ClockIn:        timestamppb.Now(),
+			ClockOut:       timestamppb.Now(),
+		}
+
+		coreServiceReq.SetterRequest.ShiftTarget = shift
+		resp = shift
+	}
+
+	if !persist {
+		return resp
+	}
+
+	res, err := coreService.SaveShift(context.Background(), coreServiceReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	switch typ {
+	case pb.SetterRequest_T_OVERRIDESHIFT:
+		resp = res.SetterResponse.GetUpdatedOverrideShiftTarget()
+	case pb.SetterRequest_T_SHIFT:
+		resp = res.SetterResponse.GetUpdatedShiftTarget()
+	}
+
+	return resp
+}
+
 func createMockWorker(t *testing.T, persist bool) *pb.Worker {
 	coreService := hcmcore.NewCoreServiceServer()
 	faker := DefaultFaker

@@ -235,6 +235,7 @@ type Shift struct {
 	Day            int32  `json:"day,omitempty"` // Assuming ShiftDay is an int32 enum
 	ClockIn        string `json:"clockIn,omitempty"`
 	ClockOut       string `json:"clockOut,omitempty"`
+	GroupId        string `json:"groupId,omitempty"`
 	Flags          uint32 `json:"flags,omitempty"`
 	Uuid           string `json:"uuid,omitempty"`
 }
@@ -249,6 +250,9 @@ func (s *Shift) TranslatePb(pb *pb.Shift) *Shift {
 	s.Day = int32(pb.Day.Number())
 	s.ClockIn = pb.ClockIn.AsTime().Format(time.RFC3339Nano)
 	s.ClockOut = pb.ClockOut.AsTime().Format(time.RFC3339Nano)
+	s.GroupId = pb.GroupId
+	s.Flags = pb.Flags
+	s.Uuid = pb.Uuid
 
 	if pb.LastUpdatedAt != nil {
 		s.LastUpdatedAt = pb.LastUpdatedAt.AsTime().Format(time.RFC3339Nano)
@@ -510,6 +514,7 @@ type JoinRequest struct {
 	Id             int64  `json:"id,omitempty"`
 	WorkerId       int64  `json:"workerId,omitempty"`
 	OrganizationId int64  `json:"organizationId,omitempty"`
+	SenderType     int32  `json:"senderType"`
 	CreatedAt      string `json:"createdAt,omitempty"`
 	ExpiredAt      string `json:"expiredAt,omitempty"`
 	Flags          uint32 `json:"flags,omitempty"`
@@ -520,6 +525,7 @@ func (j *JoinRequest) TranslatePb(pb *pb.JoinRequest) *JoinRequest {
 	j.Id = pb.Id
 	j.WorkerId = pb.WorkerId
 	j.OrganizationId = pb.OrganizationId
+	j.SenderType = int32(pb.SenderType)
 	j.CreatedAt = pb.CreatedAt.AsTime().Format(time.RFC3339Nano)
 	j.ExpiredAt = pb.ExpiredAt.AsTime().Format(time.RFC3339Nano)
 	j.Flags = pb.Flags
@@ -568,6 +574,7 @@ type Deduction struct {
 	Value         float32 `json:"value,omitempty"`
 	Flags         uint32  `json:"flags,omitempty"`
 	Uuid          string  `json:"uuid,omitempty"`
+	Typ           int32   `json:"typ,omitempty"`
 }
 
 func (w *Deduction) TranslatePb(pb *pb.Deduction) *Deduction {
@@ -581,6 +588,7 @@ func (w *Deduction) TranslatePb(pb *pb.Deduction) *Deduction {
 	w.Value = pb.Value
 	w.Flags = pb.Flags
 	w.Uuid = pb.Uuid
+	w.Typ = int32(pb.Typ)
 
 	return w
 }
@@ -604,6 +612,7 @@ type Compensation struct {
 	Value          float32 `json:"value,omitempty"`
 	Flags          uint32  `json:"flags,omitempty"`
 	Uuid           string  `json:"uuid,omitempty"`
+	Scheme         int32   `json:"scheme,omitempty"`
 }
 
 func (c *Compensation) TranslatePb(pb *pb.Compensation) *Compensation {
@@ -621,6 +630,7 @@ func (c *Compensation) TranslatePb(pb *pb.Compensation) *Compensation {
 	c.Value = pb.Value
 	c.Flags = pb.Flags
 	c.Uuid = pb.Uuid
+	c.Scheme = int32(pb.Scheme)
 
 	if pb.LastUpdatedAt != nil {
 		c.LastUpdatedAt = pb.LastUpdatedAt.AsTime().Format(time.RFC3339Nano)
@@ -713,7 +723,7 @@ func (a *Attendance) TranslatePb(pb *pb.Attendance) *Attendance {
 type Addition struct {
 	Id            int64   `json:"id"`
 	CreatedById   *int64  `json:"createdById,omitempty"`
-	UpdatedByid   *int64  `json:"updatedByid,omitempty"`
+	UpdatedById   *int64  `json:"updatedByid,omitempty"`
 	WorkerId      *int64  `json:"workerId,omitempty"`
 	CreatedAt     string  `json:"createdAt,omitempty"`
 	LastUpdatedAt string  `json:"lastUpdatedAt,omitempty"`
@@ -722,18 +732,20 @@ type Addition struct {
 	Value         float32 `json:"value,omitempty"`
 	Flags         uint32  `json:"flags,omitempty"`
 	Uuid          string  `json:"uuid,omitempty"`
+	Typ           int32   `json:"typ,omitempty"`
 }
 
 func (a *Addition) TranslatePb(pb *pb.Addition) *Addition {
 	a.Id = pb.Id
 	a.CreatedById = pb.CreatedById
-	a.UpdatedByid = pb.UpdatedByid
+	a.UpdatedById = pb.UpdatedById
 	a.WorkerId = pb.WorkerId
 	a.CreatedAt = pb.CreatedAt.AsTime().Format(time.RFC3339Nano)
 	a.Name = pb.Name
 	a.Value = pb.Value
 	a.Flags = pb.Flags
 	a.Uuid = pb.Uuid
+	a.Typ = int32(pb.Typ)
 
 	if pb.LastUpdatedAt != nil {
 		a.LastUpdatedAt = pb.LastUpdatedAt.AsTime().String()

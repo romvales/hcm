@@ -9,7 +9,9 @@
     "test": "bun test",
     "make:build": "make build",
     "make:dev": "make dev",
-    "make:protobuild": "make proto-build"
+    "make:protobuild": "make protobuild",
+    "make:test": "make test",
+    "make:test.nonverbose": "make test.nonverbose"
   },
   "files": [
     "dist"

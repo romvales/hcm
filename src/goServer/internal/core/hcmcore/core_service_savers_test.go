@@ -8,7 +8,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -530,7 +529,7 @@ func TestSaveShift(t *testing.T) {
 
 		assertCheckForMissingResponse(t, err, res)
 
-		updatedShift := res.SetterResponse.UpdatedShiftTarget
+		updatedShift := res.SetterResponse.GetUpdatedShiftTarget()
 
 		assert.NotNil(
 			updatedShift,
@@ -548,7 +547,6 @@ func TestSaveShift(t *testing.T) {
 			Day:              pb.ShiftDay_TUE,
 			OverrideClockIn:  timestamppb.Now(),
 			OverrideClockOut: timestamppb.Now(),
-			GroupId:          uuid.NewString(),
 		}
 
 		res, err := coreService.SaveShift(context.Background(), &pb.CoreServiceRequest{
@@ -616,6 +614,36 @@ func TestSaveAttendance(t *testing.T) {
 
 		cleanCreatedMockDataInTableNameById(t, "workers", worker.Id)
 		cleanCreatedMockDataInTableNameById(t, "organizations", organization.Id)
+	})
+
+}
+
+func TestSaveJoinRequest(t *testing.T) {
+	assert := assert.New(t)
+	coreService := hcmcore.NewCoreServiceServer()
+
+	t.Run("should be able for a mock worker to send a join request to an organization", func(t *testing.T) {
+		organization := createMockOrganization(t, true)
+		worker := createMockWorker(t, true)
+
+		res, err := coreService.SaveJoinRequest(context.Background(), &pb.CoreServiceRequest{
+			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+			SetterRequest: &pb.SetterRequest{
+				RequestSenderType: pb.JoinRequest_T_WORKER.Enum(),
+				RequestSenderId:   &worker.Id,
+				TargetId:          &organization.Id,
+			},
+		})
+
+		assertCheckForMissingResponse(t, err, res)
+
+		savedJoinRequest := res.SetterResponse.GetJoinRequestResult()
+
+		assert.Equal(res.Code, pb.CoreServiceResponse_C_NOERROR, "expected for the function to execute properly")
+		assert.Equal(pb.JoinRequest_T_WORKER, savedJoinRequest.GetSenderType(), "did not match the expected sender type")
+
+		cleanCreatedMockDataInTableNameById(t, "organizations", organization.Id)
+		cleanCreatedMockDataInTableNameById(t, "workers", worker.Id)
 	})
 
 }

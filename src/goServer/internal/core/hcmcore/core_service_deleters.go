@@ -118,3 +118,8 @@ func (srv *CoreServiceServer) DeleteAttendanceById(ctx _Context, req *_Request) 
 	var _funcName = "CoreServiceServer.DeleteAttendanceById()"
 	return srv.deleteItemById(ctx, req, _funcName, "attendances")
 }
+
+func (srv *CoreServiceServer) DeleteJoinRequestById(ctx _Context, req *_Request) (res *_Response, err error) {
+	var _funcName = "CoreServiceServer.DeleteJoinRequestById()"
+	return srv.deleteItemById(ctx, req, _funcName, "pendingJoinRequests")
+}

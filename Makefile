@@ -18,10 +18,17 @@ build:
 dev:
 	@make clean && make run
 
-test:
+test.v:
 	@make clean
 	@cd ${GODIR} && go clean -testcache && go test -count=1 -v ./internal/core/hcmcore/...
+
+test:
+	@make clean
+	@cd ${GODIR} && go clean -testcache && go test -count=1 ./internal/core/hcmcore/...
 
 clean:
 	@cd ${GODIR} && [ -e ./main ] && rm ./main || echo &> /dev/null;
 	@cd ${GODIR} && go clean -testcache;
+
+db/reset:
+	@npx supabase db reset

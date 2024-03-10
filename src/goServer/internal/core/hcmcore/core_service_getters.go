@@ -490,6 +490,7 @@ func (srv *CoreServiceServer) GetAdditionById(ctx _Context, req *_Request) (res 
 			SupabaseCallback: supabaseGetItemByIdCallback("additions"),
 		},
 	})
+
 	if err != nil {
 		return
 	}
@@ -532,38 +533,56 @@ func (srv *CoreServiceServer) GetShiftById(ctx _Context, req *_Request) (res *_R
 	var _funcName = "CoreServiceServer.GetShiftById()"
 	var tableName string
 
-	resp := &converters.Role{}
+	noErrorRes := &_Response{
+		Code:           pb.CoreServiceResponse_C_NOERROR,
+		GetterResponse: &pb.GetterResponse{},
+	}
+
+	queryParams := CoreServiceGetQueryParams{
+		Query:    Q_GETTER,
+		FuncName: _funcName,
+		Req:      req,
+	}
+
+	executeQuery := func() (*_Response, error) {
+		// Specify what callback function will be called.
+		queryParams.Callback = DatabaseActionCallback{
+			SupabaseCallback: supabaseGetItemByIdCallback(tableName),
+		}
+
+		return srv.queryItemById(ctx, queryParams)
+	}
 
 	switch req.GetterRequest.GetTargetShiftType() {
 	case pb.SetterRequest_T_OVERRIDESHIFT:
 		tableName = "overrideShifts"
+		overrideShift := &converters.OverrideShift{}
+		queryParams.Resp = overrideShift
+
+		if res, err = executeQuery(); err != nil {
+			return
+		}
+
+		noErrorRes.GetterResponse.OverrideShiftResult = converters.ConvertMapToOverrideShiftProto(overrideShift)
 	case pb.SetterRequest_T_SHIFT:
 		tableName = "standardShifts"
+		shift := &converters.Shift{}
+		queryParams.Resp = shift
+
+		if res, err = executeQuery(); err != nil {
+			return
+		}
+
+		noErrorRes.GetterResponse.ShiftResult = converters.ConvertMapToShiftProto(shift)
 	}
 
-	res, err = srv.queryItemById(ctx, CoreServiceGetQueryParams{
-		Query:    Q_GETTER,
-		FuncName: _funcName,
-		Resp:     resp,
-		Req:      req,
-		Callback: DatabaseActionCallback{
-			SupabaseCallback: supabaseGetItemByIdCallback(tableName),
-		},
-	})
-	if err != nil {
-		return
-	}
-
-	return &_Response{
-		Code:           pb.CoreServiceResponse_C_NOERROR,
-		GetterResponse: &pb.GetterResponse{},
-	}, nil
+	return noErrorRes, nil
 }
 
 func (srv *CoreServiceServer) GetAttendanceById(ctx _Context, req *_Request) (res *_Response, err error) {
 	var _funcName = "CoreServiceServer.GetAttendanceById()"
 
-	resp := &converters.Role{}
+	resp := &converters.Attendance{}
 
 	res, err = srv.queryItemById(ctx, CoreServiceGetQueryParams{
 		Query:    Q_GETTER,
@@ -579,7 +598,9 @@ func (srv *CoreServiceServer) GetAttendanceById(ctx _Context, req *_Request) (re
 	}
 
 	return &_Response{
-		Code:           pb.CoreServiceResponse_C_NOERROR,
-		GetterResponse: &pb.GetterResponse{},
+		Code: pb.CoreServiceResponse_C_NOERROR,
+		GetterResponse: &pb.GetterResponse{
+			AttendanceResult: converters.ConvertMapToAttendanceProto(resp),
+		},
 	}, nil
 }

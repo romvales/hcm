@@ -8,13 +8,10 @@ option optimize_for = SPEED;
 import "hcmcore.proto";
 
 //
-//
-//
 service CoreService {
-
   rpc getWorkerById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc getOrganizationById(CoreServiceRequest) returns (CoreServiceResponse);
-  rpc getOrganizationByCreatorId(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc getOrganizationsByCreatorId(CoreServiceRequest) returns (CoreServiceResponse);
   rpc getRoleById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc getTeamById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc getRolesFromOrganization(CoreServiceRequest) returns (CoreServiceResponse);
@@ -42,6 +39,7 @@ service CoreService {
   rpc savePayroll(CoreServiceRequest) returns (CoreServiceResponse);
   rpc saveAttendance(CoreServiceRequest) returns (CoreServiceResponse);
   rpc saveShift(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc saveJoinRequest(CoreServiceRequest) returns (CoreServiceResponse);
 
   rpc deleteWorkerById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc deleteWorkerIdentityCardById(CoreServiceRequest) returns (CoreServiceResponse);
@@ -52,8 +50,11 @@ service CoreService {
   rpc deleteAdditionById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc deleteDeductionById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc deleteAttendanceById(CoreServiceRequest) returns (CoreServiceResponse);
+  rpc deletePayrollById(CoreServiceRequest) returns (CoreServiceResponse);
   rpc deleteShiftById(CoreServiceRequest) returns (CoreServiceResponse);
-  
+  rpc deleteJoinRequestById(CoreServiceRequest) returns (CoreServiceResponse);
+
+  // @TOMORROW Add new related core functions for the hcm, with the help of these foundational RPCs
 }
 
 //
@@ -112,19 +113,24 @@ message GetterResponse {
   
   optional Worker workerResult = 5;
   optional Organization organizationResult = 6;
-  optional Role roleResult = 7;
-  optional Team teamResult = 8;
-  optional WorkerIdentityCard identityCardResult = 9;
-  optional Member memberResult = 10;
-  optional Compensation compensationResult = 11;
-  optional Addition additionResult = 12;
-  optional Deduction deductionResult = 13;
-  optional Payroll payrollResult = 14;
-  optional Attendance attendanceResult = 15;
-  optional Shift shiftResult = 16;
-  optional OverrideShift overrideShiftResult = 17;
-
-  
+  repeated Organization organizationsResult = 7;
+  optional Role roleResult = 8;
+  optional Team teamResult = 9;
+  optional WorkerIdentityCard identityCardResult = 10;
+  optional Member memberResult = 11;
+  optional Compensation compensationResult = 12;
+  optional Addition additionResult = 13;
+  optional Deduction deductionResult = 14;
+  optional Payroll payrollResult = 15;
+  optional Attendance attendanceResult = 16;
+  optional Shift shiftResult = 17;
+  optional OverrideShift overrideShiftResult = 18;
+  repeated Role organizationRolesResult = 19;
+  repeated Team organizationTeamsResult = 20;
+  repeated Member membersResult = 21;
+  repeated OrganizationPendingRequestRelation organizationPendingRequestsResult = 22;
+  repeated WorkerPendingRequestRelation workerPendingRequestsResult = 23;
+  optional JoinRequest joinRequestResult = 24;
 }
 
 //
@@ -157,6 +163,9 @@ message SetterRequest {
   optional Deduction deductionTarget = 16;
   optional Payroll payrollTarget = 17;
   optional Attendance attendanceTarget = 18;
+
+  optional int64 requestSenderId = 19;
+  optional JoinRequest.RequestSenderType requestSenderType = 20;
 }
 
 //
@@ -184,7 +193,6 @@ message SetterResponse {
   optional Attendance updatedAttendanceTarget = 18;
   optional Shift updatedShiftTarget = 19;
   optional OverrideShift updatedOverrideShiftTarget = 20;
-  
   optional SetterRequest.ShiftOpType targetShiftType = 21;
-
+  optional JoinRequest joinRequestResult = 22;
 }

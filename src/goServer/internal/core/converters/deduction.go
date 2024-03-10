@@ -15,6 +15,7 @@ func ConvertMapToDeductionProto(mp *Deduction) *pb.Deduction {
 		Value:         float32(mp.Value),
 		Flags:         mp.Flags,
 		Uuid:          mp.Uuid,
+		Typ:           pb.Deduction_DeductionType(mp.Typ),
 	}
 
 	return result

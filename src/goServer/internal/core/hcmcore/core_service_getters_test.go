@@ -4,6 +4,7 @@ import (
 	"context"
 	"goServer/internal/core/hcmcore"
 	"goServer/internal/core/pb"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -262,7 +263,7 @@ func TestGetOrganizationJoinRequests(t *testing.T) {
 		organization := createMockOrganization(t, true)
 		worker := createMockWorker(t, true)
 
-		res, err := coreService.SendJoinRequest(context.Background(), &pb.CoreServiceRequest{
+		res, err := coreService.SaveJoinRequest(context.Background(), &pb.CoreServiceRequest{
 			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
 			SetterRequest: &pb.SetterRequest{
 				RequestSenderType: pb.JoinRequest_T_ORGANIZATION.Enum(),
@@ -286,7 +287,7 @@ func TestGetWorkerJoinRequests(t *testing.T) {
 		organization := createMockOrganization(t, true)
 		worker := createMockWorker(t, true)
 
-		res, err := coreService.SendJoinRequest(context.Background(), &pb.CoreServiceRequest{
+		res, err := coreService.SaveJoinRequest(context.Background(), &pb.CoreServiceRequest{
 			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
 			SetterRequest: &pb.SetterRequest{
 				RequestSenderType: pb.JoinRequest_T_WORKER.Enum(),
@@ -310,7 +311,7 @@ func TestGetJoinRequestById(t *testing.T) {
 		organization := createMockOrganization(t, true)
 		worker := createMockWorker(t, true)
 
-		res, err := coreService.SendJoinRequest(context.Background(), &pb.CoreServiceRequest{
+		res, err := coreService.SaveJoinRequest(context.Background(), &pb.CoreServiceRequest{
 			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
 			SetterRequest: &pb.SetterRequest{
 				RequestSenderType: pb.JoinRequest_T_ORGANIZATION.Enum(),
@@ -457,7 +458,7 @@ func TestGetDeductionById(t *testing.T) {
 
 		savedDeduction := res.SetterResponse.GetUpdatedDeductionTarget()
 
-		res, err = coreService.GetAdditionById(context.Background(), &pb.CoreServiceRequest{
+		res, err = coreService.GetDeductionById(context.Background(), &pb.CoreServiceRequest{
 			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
 			GetterRequest: &pb.GetterRequest{
 				TargetId: &savedDeduction.Id,
@@ -466,7 +467,7 @@ func TestGetDeductionById(t *testing.T) {
 
 		assertCheckForMissingResponse(t, err, res)
 
-		result := res.GetterResponse.GetAdditionResult()
+		result := res.GetterResponse.GetDeductionResult()
 
 		assert.NotNil(result, "expected to return the mock deduction")
 
@@ -523,6 +524,19 @@ func TestGetAttendanceById(t *testing.T) {
 
 		assert.NotNil(savedAttendance, "expected to return the updated attendance from the database")
 
+		res, err = coreService.GetAttendanceById(context.Background(), &pb.CoreServiceRequest{
+			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+			GetterRequest: &pb.GetterRequest{
+				TargetId: &savedAttendance.Id,
+			},
+		})
+
+		assertCheckForMissingResponse(t, err, res)
+
+		result := res.GetterResponse.GetAttendanceResult()
+
+		assert.Equal(savedAttendance, result, "expected to match the persisted mock attendance from the database")
+
 		cleanCreatedMockDataInTableNameById(t, "attendances", savedAttendance.Id)
 		cleanCreatedMockDataInTableNameById(t, "standardShifts", shift.Id)
 		cleanCreatedMockDataInTableNameById(t, "workers", worker.Id)
@@ -562,4 +576,60 @@ func TestGetPayrollById(t *testing.T) {
 		cleanCreatedMockDataInTableNameById(t, "organizations", organization.Id)
 	})
 
+}
+
+func TestGetShiftById(t *testing.T) {
+	assert := assert.New(t)
+	coreService := hcmcore.NewCoreServiceServer()
+
+	organization := createMockOrganization(t, true)
+
+	var testRun sync.WaitGroup
+
+	testRun.Add(1)
+	t.Run("should be able to get the created mock shift from the database", func(t *testing.T) {
+		shift := createMockShift(t, organization.Id, pb.SetterRequest_T_SHIFT, true).(*pb.Shift)
+
+		res, err := coreService.GetShiftById(context.Background(), &pb.CoreServiceRequest{
+			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+			GetterRequest: &pb.GetterRequest{
+				TargetId: &shift.Id,
+			},
+		})
+
+		assertCheckForMissingResponse(t, err, res)
+
+		result := res.GetterResponse.GetShiftResult()
+
+		assert.Equal(shift, result, "expected for the resulting shift to match the original mock shift")
+
+		testRun.Done()
+		cleanCreatedMockDataInTableNameById(t, "standardShifts", shift.Id)
+	})
+
+	testRun.Add(1)
+	t.Run("should get the override shift persisted to the database", func(t *testing.T) {
+		overrideShift := createMockShift(t, organization.Id, pb.SetterRequest_T_OVERRIDESHIFT, true).(*pb.OverrideShift)
+
+		res, err := coreService.GetShiftById(context.Background(), &pb.CoreServiceRequest{
+			UsedClient: pb.CoreServiceRequest_C_SUPABASE,
+			GetterRequest: &pb.GetterRequest{
+				TargetShiftType: pb.SetterRequest_T_OVERRIDESHIFT.Enum(),
+				TargetId:        &overrideShift.Id,
+			},
+		})
+
+		assertCheckForMissingResponse(t, err, res)
+
+		result := res.GetterResponse.GetOverrideShiftResult()
+
+		assert.Equal(overrideShift, result, "expected result did not match with the original mock override shift")
+
+		testRun.Done()
+		cleanCreatedMockDataInTableNameById(t, "overrideShifts", overrideShift.Id)
+	})
+
+	testRun.Wait()
+
+	cleanCreatedMockDataInTableNameById(t, "organizations", organization.Id)
 }
